@@ -40,7 +40,7 @@ function Swatches({
 
 export function Configurator() {
   const paint = useStore(() => store.paint, "obsidian");
-  const frame = useStore(() => store.frame, "gunmetal");
+  const frame = useStore(() => store.frame, "red");
   return (
     <div className="hud max-w-sm space-y-7 rounded-3xl p-6 sm:p-8">
       <Swatches label="Paint" items={PAINTS} value={paint} onPick={(id) => store.set("paint", id)} />

@@ -15,10 +15,10 @@ export const PAINTS: Finish[] = [
     id: "obsidian",
     name: "Obsidian",
     color: "#0b0c0f",
-    metalness: 0.5,
-    roughness: 0.16,
+    metalness: 0.45,
+    roughness: 0.3,
     clearcoat: 1,
-    swatch: "linear-gradient(160deg,#3a3d45,#08090b 55%,#d42027 56%,#22252b 62%)",
+    swatch: "linear-gradient(160deg,#3a3d45,#08090b 55%,#9aa0aa 56%,#22252b 62%)",
   },
   {
     id: "gunmetal",
@@ -51,6 +51,15 @@ export const PAINTS: Finish[] = [
 
 export const FRAMES: Finish[] = [
   {
+    id: "red",
+    name: "Candy Red",
+    color: "#8e1519",
+    metalness: 0.6,
+    roughness: 0.32,
+    clearcoat: 0.8,
+    swatch: "linear-gradient(160deg,#e0414a,#6e0d10)",
+  },
+  {
     id: "gunmetal",
     name: "Gunmetal",
     color: "#3d4048",
@@ -67,15 +76,6 @@ export const FRAMES: Finish[] = [
     roughness: 0.18,
     clearcoat: 0,
     swatch: "linear-gradient(160deg,#5b5f68,#0e0f12)",
-  },
-  {
-    id: "red",
-    name: "Race Red",
-    color: "#c01b21",
-    metalness: 0.5,
-    roughness: 0.3,
-    clearcoat: 0.6,
-    swatch: "linear-gradient(160deg,#ff6a5c,#8c1015)",
   },
 ];
 

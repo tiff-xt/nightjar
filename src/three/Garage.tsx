@@ -23,6 +23,7 @@ const reduceMotion = () => typeof window !== "undefined" && matchMedia("(prefers
 /** Fixed inspection angles via ?view= (for design review and screenshots). */
 const INSPECT: Record<string, { position: [number, number, number]; target: [number, number, number]; fov: number }> = {
   side: { position: [0, 0.68, 4.2], target: [0, 0.66, 0], fov: 30 },
+  front: { position: [3.2, 0.9, 0], target: [0, 0.75, 0], fov: 22 },
   front34: { position: [2.4, 1.15, 2.4], target: [0, 0.66, 0], fov: 30 },
   rear34: { position: [-2.4, 1.2, 2.2], target: [0, 0.66, 0], fov: 30 },
   engine: { position: [0.35, 0.62, 1.35], target: [0.05, 0.55, 0], fov: 34 },

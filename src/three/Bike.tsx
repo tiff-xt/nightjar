@@ -61,18 +61,20 @@ type Mats = ReturnType<typeof createMaterials>;
 let materials: Mats | null = null;
 const getMaterials = () => (materials ??= createMaterials());
 
-const RED = "#d42027";
+const RED = "#a3161b";
 
 function createMaterials() {
   const physical = (p: THREE.MeshPhysicalMaterialParameters) => new THREE.MeshPhysicalMaterial(p);
   return {
     /** Bodywork paint (configurator). Default: deep gloss black. */
-    paint: physical({ color: "#0b0c0f", metalness: 0.5, roughness: 0.16, clearcoat: 1, clearcoatRoughness: 0.04 }),
+    paint: physical({ color: "#0b0c0f", metalness: 0.45, roughness: 0.3, clearcoat: 0.7, clearcoatRoughness: 0.2 }),
     /** Frame, subframe, pivot plates (configurator). Default: gunmetal. */
-    frame: physical({ color: "#3d4048", metalness: 0.9, roughness: 0.34 }),
+    frame: physical({ color: "#8e1519", metalness: 0.6, roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.1 }),
     gunmetal: physical({ color: "#4a4e57", metalness: 0.92, roughness: 0.3, clearcoat: 0.3 }),
     alloy: physical({ color: "#5d616b", metalness: 0.95, roughness: 0.26 }),
-    accent: physical({ color: RED, metalness: 0.35, roughness: 0.28, clearcoat: 0.8 }),
+    /** Small highlights: silver on black. */
+    accent: physical({ color: "#b3b8c1", metalness: 1, roughness: 0.2 }),
+    red: physical({ color: RED, metalness: 0.5, roughness: 0.3, clearcoat: 0.8 }),
     gloss: physical({ color: "#0d0e11", metalness: 0.3, roughness: 0.22, clearcoat: 1 }),
     satinBlack: physical({ color: "#141519", metalness: 0.45, roughness: 0.55 }),
     rubber: physical({ color: "#0b0b0c", metalness: 0, roughness: 0.9 }),
@@ -80,6 +82,7 @@ function createMaterials() {
     engine: physical({ color: "#1d1e22", metalness: 0.75, roughness: 0.48 }),
     fins: physical({ color: "#5a5f69", metalness: 1, roughness: 0.32 }),
     stanchion: physical({ color: "#b8bcc4", metalness: 1, roughness: 0.1 }),
+    brushed: physical({ color: "#d3d6dc", metalness: 0.8, roughness: 0.42 }),
     steel: physical({ color: "#a9aeb7", metalness: 1, roughness: 0.22 }),
     exhaust: physical({ color: "#55524f", metalness: 1, roughness: 0.3, iridescence: 0.5, iridescenceIOR: 1.7 }),
     carbon: physical({ color: "#17181b", metalness: 0.4, roughness: 0.3, clearcoat: 1 }),
@@ -262,7 +265,7 @@ function Wheel({ at, front, m }: { at: P3; front?: boolean; m: Mats }) {
                 radius={0.012}
                 position={[-0.083, 0.107, s * 0.02]}
                 rotation={[0, 0, 2.2 - Math.PI / 2]}
-                material={m.accent}
+                material={m.gunmetal}
               />
             </group>
           )}
@@ -276,7 +279,7 @@ function Wheel({ at, front, m }: { at: P3; front?: boolean; m: Mats }) {
               radius={0.01}
               position={[-0.06, -0.075, -0.016]}
               rotation={[0, 0, -2.25 + Math.PI / 2]}
-              material={m.accent}
+              material={m.gunmetal}
             />
           </group>
           <mesh geometry={geo.sprocket} position={[0, 0, 0.11]} material={m.gunmetal} />
@@ -338,7 +341,7 @@ function Frame({ m }: { m: Mats }) {
             <Panel profile={plate} width={0.022} z={s * 0.135} bevel={0.006} material={m.frame} />
             <Panel profile={plateInset} width={0.004} z={s * 0.148} bevel={0.001} material={m.engine} />
             {/* Subframe */}
-            <Rod a={[-0.19, 0.77, s * 0.11]} b={[-0.62, 0.93, s * 0.07]} r={0.012} material={m.frame} />
+            <Rod a={[-0.19, 0.77, s * 0.11]} b={[-0.7, 0.95, s * 0.07]} r={0.012} material={m.frame} />
             <Rod a={[-0.22, 0.58, s * 0.115]} b={[-0.52, 0.87, s * 0.075]} r={0.011} material={m.frame} />
             {/* Engine mount bolts */}
             <Disc r={0.013} depth={0.012} position={[0.27, 0.6, s * 0.123]} material={m.gunmetal} />
@@ -363,7 +366,16 @@ function Frame({ m }: { m: Mats }) {
           </group>
         )}
       </Pair>
-      <Rod a={[-0.6, 0.92, 0.07]} b={[-0.6, 0.92, -0.07]} r={0.01} material={m.frame} />
+      <Rod a={[-0.68, 0.94, 0.07]} b={[-0.68, 0.94, -0.07]} r={0.01} material={m.frame} />
+      {/* Rear frame triangle behind the engine, visible below the seat nose */}
+      <Pair>
+        {(s) => (
+          <group key={s}>
+            <Rod a={[-0.12, 0.84, s * 0.12]} b={[-0.16, 0.55, s * 0.135]} r={0.016} material={m.frame} />
+            <Rod a={[-0.12, 0.84, s * 0.12]} b={[0.05, 0.8, s * 0.13]} r={0.014} material={m.frame} />
+          </group>
+        )}
+      </Pair>
       {/* Swingarm pivot */}
       <Rod a={[PIVOT[0], PIVOT[1], 0.17]} b={[PIVOT[0], PIVOT[1], -0.17]} r={0.016} material={m.gunmetal} />
       <Disc r={0.02} depth={0.008} position={[PIVOT[0], PIVOT[1], 0.172]} material={m.accent} />
@@ -533,22 +545,23 @@ function Exhaust({ m }: { m: Mats }) {
         sweep(
           [
             [0.29, 0.655, s * 0.07],
-            [0.36, 0.58, s * 0.075],
-            [0.37, 0.43, s * 0.07],
-            [0.3, 0.29, s * 0.05],
-            [0.12, 0.235, s * 0.03],
-            [-0.02, 0.235, 0],
+            [0.37, 0.57, s * 0.075],
+            [0.38, 0.42, s * 0.07],
+            [0.31, 0.27, s * 0.05],
+            [0.14, 0.215, s * 0.03],
+            [0.0, 0.215, 0],
           ],
           0.021,
         ),
       ),
       link: sweep(
         [
-          [-0.1, 0.235, 0],
-          [-0.17, 0.25, -0.05],
-          [-0.2, 0.27, -0.1],
+          [-0.08, 0.22, 0],
+          [-0.16, 0.23, -0.06],
+          [-0.24, 0.27, -0.16],
+          [-0.31, 0.32, -0.21],
         ],
-        0.03,
+        0.032,
       ),
     }),
     [],
@@ -558,24 +571,26 @@ function Exhaust({ m }: { m: Mats }) {
       {geo.headers.map((g, i) => (
         <mesh key={i} geometry={g} material={m.exhaust} castShadow />
       ))}
-      <RBox size={[0.2, 0.07, 0.16]} radius={0.025} position={[-0.06, 0.235, 0]} material={m.gunmetal} />
+      <RBox size={[0.18, 0.07, 0.15]} radius={0.025} position={[-0.04, 0.22, 0]} material={m.gunmetal} />
       <mesh geometry={geo.link} material={m.exhaust} castShadow />
-      {/* Stubby, low silencer on the right */}
-      <group position={[-0.3, 0.3, -0.12]} rotation={[0, 0, 0.22]}>
-        <RBox size={[0.24, 0.11, 0.12]} radius={0.035} position={[0, 0, 0]} material={m.gunmetal} />
-        <RBox size={[0.17, 0.08, 0.01]} radius={0.004} position={[0.01, 0.005, -0.063]} material={m.carbon} />
-        <RBox size={[0.03, 0.118, 0.128]} radius={0.01} position={[-0.11, 0, 0]} material={m.satinBlack} />
-        <mesh position={[-0.105, 0, 0]} rotation={[0, Math.PI / 2, 0]} material={m.accent}>
-          <torusGeometry args={[0.058, 0.003, 6, 40]} />
+      {/* Big stubby silencer beside the rear tyre: brushed silver body, black upper shield, angled cap */}
+      <group position={[-0.47, 0.42, -0.22]} rotation={[0, 0, 0.5]}>
+        <RBox size={[0.36, 0.125, 0.115]} radius={0.04} position={[0, 0, 0]} material={m.brushed} />
+        <RBox size={[0.3, 0.06, 0.124]} radius={0.02} position={[0.015, 0.04, 0]} material={m.satinBlack} />
+        <RBox
+          size={[0.05, 0.135, 0.125]}
+          radius={0.015}
+          position={[-0.17, 0.005, 0]}
+          rotation={[0, 0, -0.35]}
+          material={m.satinBlack}
+        />
+        <mesh position={[-0.2, -0.02, 0]} rotation={[0, 0, Math.PI / 2]} material={m.engine}>
+          <cylinderGeometry args={[0.022, 0.022, 0.03, 20]} />
         </mesh>
-        <Pair>
-          {(s) => (
-            <mesh key={s} position={[-0.13, -0.01, s * 0.025]} rotation={[0, 0, Math.PI / 2]} material={m.engine}>
-              <cylinderGeometry args={[0.016, 0.016, 0.03, 20]} />
-            </mesh>
-          )}
-        </Pair>
+        <RBox size={[0.04, 0.12, 0.118]} radius={0.015} position={[0.17, -0.005, 0]} material={m.gunmetal} />
       </group>
+      {/* Hanger to the pillion peg bracket */}
+      <Rod a={[-0.5, 0.53, -0.2]} b={[-0.47, 0.64, -0.14]} r={0.008} material={m.satinBlack} />
     </group>
   );
 }
@@ -583,66 +598,77 @@ function Exhaust({ m }: { m: Mats }) {
 /* ─── Bodywork ───────────────────────────────────────────────────── */
 
 const TANK: P2[] = [
-  [0.34, 1.02],
-  [0.2, 1.075],
-  [0.04, 1.065],
-  [-0.1, 1.0],
-  [-0.16, 0.93],
-  [-0.1, 0.86],
-  [0.1, 0.835],
+  [0.36, 1.03],
+  [0.24, 1.09],
+  [0.08, 1.075],
+  [-0.04, 1.02],
+  [-0.1, 0.95],
+  [-0.09, 0.87],
+  [0.1, 0.84],
   [0.3, 0.87],
-  [0.39, 0.95],
+  [0.4, 0.95],
 ];
+/** Tank shroud: wraps the tank's front flank and drops down to the radiator. */
 const SHROUD: P2[] = [
-  [0.22, 1.04],
-  [0.41, 1.02],
-  [0.53, 0.94],
-  [0.49, 0.86],
-  [0.41, 0.74],
-  [0.31, 0.7],
-  [0.3, 0.8],
-  [0.21, 0.9],
+  [0.12, 1.02],
+  [0.36, 1.035],
+  [0.47, 0.98],
+  [0.5, 0.9],
+  [0.45, 0.8],
+  [0.4, 0.71],
+  [0.32, 0.69],
+  [0.27, 0.78],
+  [0.19, 0.87],
+  [0.1, 0.9],
 ];
-const SHROUD_RED: P2[] = [
-  [0.29, 0.97],
-  [0.47, 0.945],
-  [0.49, 0.915],
-  [0.31, 0.93],
+/** Silver accent line along the shroud's upper crease. */
+const SHROUD_LINE: P2[] = [
+  [0.2, 0.955],
+  [0.44, 0.92],
+  [0.45, 0.905],
+  [0.21, 0.94],
 ];
-const SHROUD_VANE: P2[] = [
-  [0.32, 0.81],
-  [0.45, 0.83],
-  [0.41, 0.745],
-  [0.33, 0.735],
+/** Black radiator side grille in front of the engine, below the shroud. */
+const RAD_SIDE: P2[] = [
+  [0.33, 0.72],
+  [0.44, 0.74],
+  [0.45, 0.56],
+  [0.39, 0.49],
+  [0.33, 0.56],
 ];
-const KNEE: P2[] = [
-  [0.06, 1.0],
-  [-0.09, 0.975],
-  [-0.12, 0.92],
-  [-0.04, 0.885],
-  [0.09, 0.9],
+/** Belly pan under the engine. */
+const BELLY: P2[] = [
+  [0.32, 0.31],
+  [0.24, 0.21],
+  [0.04, 0.17],
+  [-0.12, 0.19],
+  [-0.1, 0.26],
+  [0.1, 0.27],
+  [0.26, 0.34],
 ];
 const TAIL: P2[] = [
-  [-0.34, 0.965],
-  [-0.6, 1.035],
-  [-0.85, 1.125],
-  [-0.87, 1.105],
-  [-0.67, 0.995],
-  [-0.42, 0.9],
+  [-0.4, 0.925],
+  [-0.6, 0.99],
+  [-0.78, 1.05],
+  [-0.94, 1.115],
+  [-0.96, 1.095],
+  [-0.82, 1.005],
+  [-0.62, 0.925],
+  [-0.44, 0.86],
 ];
 const TAIL_STRIPE: P2[] = [
-  [-0.46, 0.975],
-  [-0.78, 1.075],
-  [-0.79, 1.065],
-  [-0.48, 0.965],
+  [-0.55, 0.955],
+  [-0.86, 1.06],
+  [-0.87, 1.05],
+  [-0.57, 0.945],
 ];
+/** Small black side panel under the seat nose, above the pivot. */
 const SIDE_COVER: P2[] = [
-  [-0.2, 0.92],
-  [-0.46, 0.965],
-  [-0.49, 0.89],
-  [-0.26, 0.8],
+  [-0.08, 0.86],
+  [-0.3, 0.88],
+  [-0.34, 0.82],
+  [-0.12, 0.79],
 ];
-
 function Bodywork({ m }: { m: Mats }) {
   return (
     <group>
@@ -654,30 +680,45 @@ function Bodywork({ m }: { m: Mats }) {
       <Pair>
         {(s) => (
           <group key={s}>
-            <Panel profile={KNEE} width={0.008} z={s * 0.153} bevel={0.002} material={m.gunmetal} />
-            {/* Blade shrouds, flared outward, with a red inlay and a gunmetal vane */}
-            <group rotation={[0, -s * 0.18, 0]}>
-              <Panel profile={SHROUD} width={0.022} z={s * 0.172} bevel={0.006} material={m.paint} />
-              <Panel profile={SHROUD_RED} width={0.004} z={s * 0.185} bevel={0.001} material={m.accent} />
-              <Panel profile={SHROUD_VANE} width={0.004} z={s * 0.185} bevel={0.001} material={m.gunmetal} />
+            {/* Tank shroud flared outward, with a silver crease line */}
+            <group rotation={[0, -s * 0.05, 0]}>
+              <Panel profile={SHROUD} width={0.024} z={s * 0.152} bevel={0.007} material={m.paint} />
+              <Panel profile={SHROUD_LINE} width={0.004} z={s * 0.166} bevel={0.001} material={m.accent} />
             </group>
-            <Panel profile={SIDE_COVER} width={0.012} z={s * 0.112} bevel={0.003} material={m.gunmetal} />
+            <Panel profile={RAD_SIDE} width={0.012} z={s * 0.185} bevel={0.003} material={m.satinBlack} />
+            {Array.from({ length: 7 }, (_, i) => (
+              <RBox
+                key={i}
+                size={[0.1, 0.004, 0.004]}
+                radius={0.001}
+                position={[0.39, 0.53 + i * 0.027, s * 0.193]}
+                material={m.engine}
+              />
+            ))}
+            <Panel profile={SIDE_COVER} width={0.012} z={s * 0.13} bevel={0.003} material={m.paint} />
             <Panel profile={TAIL_STRIPE} width={0.003} z={s * 0.101} bevel={0.001} material={m.accent} />
             {/* Indicators on the plate hanger */}
-            <mesh position={[-0.83, 0.9, s * 0.085]} rotation={[Math.PI / 2, 0, 0]} material={m.amber}>
+            <mesh position={[-0.9, 0.93, s * 0.085]} rotation={[Math.PI / 2, 0, 0]} material={m.amber}>
               <capsuleGeometry args={[0.009, 0.028, 4, 10]} />
             </mesh>
           </group>
         )}
       </Pair>
       <Panel profile={TAIL} width={0.2} bevel={0.02} material={m.paint} />
+      <Panel profile={BELLY} width={0.25} bevel={0.012} material={m.satinBlack} />
       {/* Tail light: a thin red blade at the tip */}
-      <mesh position={[-0.866, 1.112, 0]} rotation={[0, 0, 0.36]} material={m.tail}>
+      <mesh position={[-0.952, 1.1, 0]} rotation={[0, 0, 0.36]} material={m.tail}>
         <boxGeometry args={[0.008, 0.026, 0.15]} />
       </mesh>
       {/* Plate hanger */}
-      <Rod a={[-0.7, 0.97, 0]} b={[-0.87, 0.78, 0]} r={0.012} material={m.satinBlack} />
-      <RBox size={[0.008, 0.12, 0.18]} radius={0.003} position={[-0.885, 0.74, 0]} material={m.satinBlack} />
+      <Rod a={[-0.74, 0.97, 0]} b={[-0.93, 0.8, 0]} r={0.012} material={m.satinBlack} />
+      <RBox
+        size={[0.008, 0.12, 0.18]}
+        radius={0.003}
+        position={[-0.945, 0.75, 0]}
+        rotation={[0, 0, -0.15]}
+        material={m.satinBlack}
+      />
     </group>
   );
 }
@@ -685,27 +726,38 @@ function Bodywork({ m }: { m: Mats }) {
 function Seat({ m }: { m: Mats }) {
   return (
     <group>
+      {/* Rider: low and long, dished, rising at the back */}
       <Panel
         profile={[
-          [-0.1, 0.915],
-          [0.0, 0.965],
-          [-0.08, 0.995],
-          [-0.34, 0.985],
-          [-0.4, 0.95],
+          [-0.05, 0.925],
+          [-0.11, 0.895],
+          [-0.2, 0.878],
+          [-0.3, 0.882],
+          [-0.38, 0.9],
+          [-0.45, 0.94],
+          [-0.49, 0.965],
+          [-0.5, 0.93],
+          [-0.42, 0.87],
+          [-0.24, 0.835],
+          [-0.08, 0.855],
         ]}
-        width={0.27}
-        bevel={0.035}
+        width={0.28}
+        bevel={0.03}
         material={m.seat}
       />
+      {/* Pillion: a short ramp that follows the tail's slope */}
       <Panel
         profile={[
-          [-0.4, 0.99],
-          [-0.62, 1.05],
-          [-0.64, 1.025],
-          [-0.42, 0.96],
+          [-0.47, 0.965],
+          [-0.55, 0.99],
+          [-0.68, 1.03],
+          [-0.74, 1.045],
+          [-0.75, 1.02],
+          [-0.6, 0.965],
+          [-0.49, 0.93],
         ]}
         width={0.19}
-        bevel={0.025}
+        bevel={0.022}
         material={m.seat}
       />
     </group>
@@ -714,6 +766,65 @@ function Seat({ m }: { m: Mats }) {
 
 /* ─── Front end ──────────────────────────────────────────────────── */
 
+/**
+ * Lens seen from the front: a tapered six-sided face, a projector, and a
+ * chevron of two LED blades with a short lower bar.
+ */
+function HeadlightLens({ m }: { m: Mats }) {
+  const lens = useMemo(
+    () =>
+      panel(
+        [
+          [-0.072, 0.935],
+          [0.072, 0.935],
+          [0.08, 0.895],
+          [0.035, 0.825],
+          [-0.035, 0.825],
+          [-0.08, 0.895],
+        ],
+        0.02,
+        0,
+        0.004,
+      ),
+    [],
+  );
+  const X = 0.596;
+  return (
+    <group>
+      <mesh geometry={lens} position={[X - 0.006, 0, 0]} rotation={[0, Math.PI / 2, 0]} material={m.lens} />
+      {/* Projector */}
+      <mesh position={[X + 0.006, 0.878, 0]} rotation={[0, 0, -Math.PI / 2]} material={m.steel}>
+        <cylinderGeometry args={[0.024, 0.026, 0.008, 32]} />
+      </mesh>
+      <mesh position={[X + 0.011, 0.878, 0]} rotation={[0, Math.PI / 2, 0]} material={m.headlight}>
+        <circleGeometry args={[0.016, 32]} />
+      </mesh>
+      {/* LED chevron */}
+      <Pair>
+        {(s) => (
+          <group key={s}>
+            <Rod
+              a={[X + 0.008, 0.926, s * 0.066]}
+              b={[X + 0.008, 0.9, s * 0.02]}
+              r={0.0035}
+              material={m.headlight}
+              segs={8}
+            />
+            <Rod
+              a={[X + 0.008, 0.89, s * 0.07]}
+              b={[X + 0.008, 0.845, s * 0.035]}
+              r={0.003}
+              material={m.headlight}
+              segs={8}
+            />
+          </group>
+        )}
+      </Pair>
+      <Rod a={[X + 0.008, 0.838, 0.024]} b={[X + 0.008, 0.838, -0.024]} r={0.003} material={m.headlight} segs={8} />
+    </group>
+  );
+}
+
 function FrontEnd({ m }: { m: Mats }) {
   const top = fork(0.765);
   const x0 = top[0] - 0.05;
@@ -721,12 +832,12 @@ function FrontEnd({ m }: { m: Mats }) {
     () => ({
       bars: sweep(
         [
-          [x0 - 0.08, 1.085, 0.37],
-          [x0 - 0.03, 1.08, 0.22],
+          [x0 - 0.07, 1.085, 0.32],
+          [x0 - 0.03, 1.08, 0.2],
           [x0, 1.075, 0.08],
           [x0, 1.075, -0.08],
-          [x0 - 0.03, 1.08, -0.22],
-          [x0 - 0.08, 1.085, -0.37],
+          [x0 - 0.03, 1.08, -0.2],
+          [x0 - 0.07, 1.085, -0.32],
         ],
         0.014,
       ),
@@ -743,7 +854,7 @@ function FrontEnd({ m }: { m: Mats }) {
         {(s) => (
           <group key={s}>
             <Rod a={fork(0.03, s * 0.095)} b={fork(0.42, s * 0.095)} r={0.0205} material={m.stanchion} />
-            <Rod a={fork(0.38, s * 0.095)} b={fork(0.8, s * 0.095)} r={0.027} material={m.gunmetal} />
+            <Rod a={fork(0.38, s * 0.095)} b={fork(0.8, s * 0.095)} r={0.027} material={m.frame} />
             <RBox
               size={[0.06, 0.1, 0.045]}
               radius={0.01}
@@ -786,20 +897,20 @@ function FrontEnd({ m }: { m: Mats }) {
         {(s) => (
           <group key={s}>
             <Rod a={[x0 + 0.01, top[1] + 0.01, s * 0.06]} b={[x0, 1.075, s * 0.06]} r={0.014} material={m.gunmetal} />
-            <Rod a={[x0 - 0.065, 1.084, s * 0.3]} b={[x0 - 0.09, 1.086, s * 0.4]} r={0.018} material={m.rubber} />
-            <Disc r={0.016} depth={0.02} position={[x0 - 0.092, 1.086, s * 0.41]} material={m.gunmetal} />
+            <Rod a={[x0 - 0.055, 1.084, s * 0.26]} b={[x0 - 0.075, 1.086, s * 0.35]} r={0.018} material={m.rubber} />
+            <Disc r={0.016} depth={0.02} position={[x0 - 0.077, 1.086, s * 0.36]} material={m.gunmetal} />
             {/* Lever perch and lever */}
             <RBox
               size={[0.03, 0.025, 0.03]}
               radius={0.006}
-              position={[x0 - 0.05, 1.085, s * 0.26]}
+              position={[x0 - 0.045, 1.085, s * 0.225]}
               material={m.satinBlack}
             />
             <Sweep
               points={[
-                [x0 - 0.035, 1.08, s * 0.27],
-                [x0 + 0.03, 1.07, s * 0.32],
-                [x0 + 0.03, 1.065, s * 0.38],
+                [x0 - 0.03, 1.08, s * 0.235],
+                [x0 + 0.03, 1.07, s * 0.28],
+                [x0 + 0.025, 1.065, s * 0.33],
               ]}
               r={0.006}
               material={m.alloy}
@@ -807,18 +918,18 @@ function FrontEnd({ m }: { m: Mats }) {
             {/* Mirror on a stalk */}
             <Sweep
               points={[
-                [x0 - 0.04, 1.09, s * 0.23],
-                [x0 - 0.05, 1.18, s * 0.27],
-                [x0 - 0.05, 1.24, s * 0.32],
+                [x0 - 0.035, 1.09, s * 0.17],
+                [x0 - 0.045, 1.2, s * 0.18],
+                [x0 - 0.05, 1.29, s * 0.2],
               ]}
               r={0.005}
               material={m.satinBlack}
             />
             <RBox
-              size={[0.014, 0.055, 0.1]}
-              radius={0.008}
-              position={[x0 - 0.05, 1.255, s * 0.35]}
-              rotation={[s * 0.2, 0, 0]}
+              size={[0.016, 0.065, 0.095]}
+              radius={0.01}
+              position={[x0 - 0.05, 1.305, s * 0.235]}
+              rotation={[s * 0.15, 0, 0]}
               material={m.gloss}
             />
           </group>
@@ -835,7 +946,7 @@ function FrontEnd({ m }: { m: Mats }) {
       />
       <Disc r={0.012} depth={0.006} position={[x0 - 0.05, 1.137, -0.22]} material={m.accent} />
       {/* TFT dash */}
-      <group position={[x0 - 0.04, 1.125, 0]} rotation={[0, 0, 0.62]}>
+      <group position={[x0 - 0.035, 1.12, 0]} rotation={[0, 0, -0.62]}>
         <RBox size={[0.016, 0.075, 0.125]} radius={0.006} position={[0, 0, 0]} material={m.gloss} />
         <mesh position={[-0.0085, 0, 0]} rotation={[0, -Math.PI / 2, 0]} material={m.screen}>
           <planeGeometry args={[0.105, 0.055]} />
@@ -844,34 +955,45 @@ function FrontEnd({ m }: { m: Mats }) {
           <planeGeometry args={[0.04, 0.004]} />
         </mesh>
       </group>
-      {/* Compact angular headlight with a projector and twin brow DRLs */}
+      {/* Angular headlight: a sharp cowl with a brow over a faceted lens */}
       <Panel
         profile={[
-          [0.44, 0.99],
-          [0.53, 0.965],
-          [0.565, 0.9],
-          [0.535, 0.83],
-          [0.455, 0.815],
-          [0.42, 0.88],
+          [0.43, 1.0],
+          [0.535, 0.985],
+          [0.6, 0.925],
+          [0.585, 0.86],
+          [0.545, 0.8],
+          [0.48, 0.79],
+          [0.42, 0.85],
         ]}
-        width={0.17}
-        bevel={0.015}
+        width={0.19}
+        bevel={0.014}
         material={m.paint}
       />
-      <mesh position={[0.578, 0.895, 0]} rotation={[0, 0, -Math.PI / 2]} material={m.lens}>
-        <cylinderGeometry args={[0.034, 0.034, 0.012, 32]} />
-      </mesh>
-      <mesh position={[0.585, 0.895, 0]} rotation={[0, Math.PI / 2, 0]} material={m.headlight}>
-        <circleGeometry args={[0.022, 32]} />
-      </mesh>
+      {/* Brow: a gunmetal blade over the lens */}
+      <Panel
+        profile={[
+          [0.5, 0.995],
+          [0.6, 0.94],
+          [0.612, 0.925],
+          [0.52, 0.965],
+        ]}
+        width={0.2}
+        bevel={0.004}
+        material={m.gunmetal}
+      />
+      <HeadlightLens m={m} />
       <Pair>
         {(s) => (
-          <mesh key={s} position={[0.567, 0.935, s * 0.05]} rotation={[s * 0.45, 0, 0.3]} material={m.headlight}>
-            <boxGeometry args={[0.008, 0.012, 0.07]} />
-          </mesh>
+          <group key={s}>
+            {/* Turn signals on the fork, just below the cowl */}
+            <mesh position={[0.52, 0.86, s * 0.125]} rotation={[0, 0, Math.PI / 2]} material={m.amber}>
+              <capsuleGeometry args={[0.008, 0.024, 4, 10]} />
+            </mesh>
+          </group>
         )}
       </Pair>
-      {/* Short front hugger with a red stripe */}
+      {/* Short front fender with a silver pinstripe */}
       <group position={FRONT}>
         <mesh geometry={geo.fender} material={m.paint} castShadow />
         <mesh geometry={geo.fenderStripe} material={m.accent} />
@@ -924,7 +1046,7 @@ function RearEnd({ m }: { m: Mats }) {
       <Pair>
         {(s) => (
           <group key={s}>
-            <Panel profile={arm} width={0.045} z={s * 0.13} bevel={0.008} material={m.alloy} />
+            <Panel profile={arm} width={0.045} z={s * 0.13} bevel={0.008} material={m.gunmetal} />
             <RBox
               size={[0.04, 0.03, 0.05]}
               radius={0.006}
@@ -934,12 +1056,12 @@ function RearEnd({ m }: { m: Mats }) {
           </group>
         )}
       </Pair>
-      <Rod a={[-0.3, 0.46, 0.13]} b={[-0.3, 0.46, -0.13]} r={0.016} material={m.alloy} />
+      <Rod a={[-0.3, 0.46, 0.13]} b={[-0.3, 0.46, -0.13]} r={0.016} material={m.gunmetal} />
       <mesh geometry={geo.chain} material={m.steel} />
       <mesh geometry={geo.frontSprocket} position={[-0.1, 0.43, 0.11]} material={m.gunmetal} />
       {/* Linkage monoshock: chrome body, red spring */}
       <Rod a={[-0.31, 0.42, 0]} b={[-0.19, 0.69, 0]} r={0.015} material={m.stanchion} />
-      <mesh geometry={geo.shockSpring} material={m.accent} />
+      <mesh geometry={geo.shockSpring} material={m.red} />
       <Disc r={0.024} depth={0.04} position={[-0.19, 0.7, 0]} material={m.gunmetal} />
       {/* Rear hugger */}
       <group position={REAR}>
@@ -982,7 +1104,7 @@ function Beam() {
   });
   // Cone apex at the headlight, opening forward along +x.
   return (
-    <mesh position={[0.59 + 1.6, 0.6, 0]} rotation={[0, 0, Math.PI / 2 + 0.12]} material={beamMaterial}>
+    <mesh position={[0.6 + 1.6, 0.6, 0]} rotation={[0, 0, Math.PI / 2 + 0.12]} material={beamMaterial}>
       <coneGeometry args={[0.85, 3.2, 48, 1, true]} />
     </mesh>
   );
@@ -992,6 +1114,7 @@ const tmpColor = new THREE.Color();
 
 export function Bike() {
   const m = getMaterials();
+  // Modelled with the exhaust on the right (−z); mirrored so that side faces the camera.
 
   // Apply configurator finishes and night-mode emissives each frame (a few uniforms).
   useFrame(() => {
@@ -1012,7 +1135,7 @@ export function Bike() {
   });
 
   return (
-    <group>
+    <group scale={[1, 1, -1]}>
       <Assembly name="frame">
         <Frame m={m} />
       </Assembly>

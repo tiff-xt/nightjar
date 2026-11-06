@@ -9,7 +9,7 @@ class Store {
   /** Continuous story position: section index + fraction (0 = hero). */
   progress = 0;
   paint = "obsidian";
-  frame = "gunmetal";
+  frame = "red";
   engineOn = false;
   rpm = 0;
   /** User drag rotation in the configurator, radians. */

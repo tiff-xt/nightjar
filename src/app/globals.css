@@ -163,6 +163,13 @@ body {
   background: var(--ink);
   pointer-events: none;
   transition: opacity 900ms ease;
+  /* Fallback: never leave the copy hidden if scripts are slow, blocked or fail. */
+  animation: veil-lift 900ms ease 1.6s forwards;
+}
+@keyframes veil-lift {
+  to {
+    opacity: 0;
+  }
 }
 html[data-scene="ready"] .veil {
   opacity: 0;

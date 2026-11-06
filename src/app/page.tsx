@@ -50,7 +50,7 @@ export default function Home() {
           <p className="mt-6 max-w-md text-lg leading-relaxed text-white/70">
             Built for the hour after dusk. Nothing hidden, nothing wasted: just frame, engine and nerve.
           </p>
-          <p className="mt-10 font-mono text-[11px] uppercase tracking-[0.3em] text-white/40">
+          <p className="mt-10 font-mono text-[11px] uppercase tracking-[0.3em] text-white/55">
             Scroll to walk around it ↓
           </p>
         </section>

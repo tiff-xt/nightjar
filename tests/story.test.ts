@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { SHOTS, calloutsAt, explodeAt, nightAt, shotAt, window01 } from "@/lib/story";
+import {
+  SHOTS,
+  calloutsAt,
+  explodeAt,
+  isThrottleKey,
+  nightAt,
+  progressFromCentres,
+  shotAt,
+  window01,
+} from "@/lib/story";
 
 describe("camera story", () => {
   it("holds exactly on each shot at its section", () => {
@@ -37,5 +46,31 @@ describe("effect windows", () => {
     expect(nightAt(exploded)).toBe(0);
     expect(nightAt(dark)).toBe(1);
     expect(calloutsAt(0, "twin")).toBe(0);
+  });
+});
+
+describe("scroll progress", () => {
+  const centres = [400, 1200, 2000];
+  it("is 0 before the first centre and clamps after the last", () => {
+    expect(progressFromCentres(0, centres)).toBe(0);
+    expect(progressFromCentres(400, centres)).toBe(0);
+    expect(progressFromCentres(5000, centres)).toBe(2);
+  });
+  it("interpolates between centres", () => {
+    expect(progressFromCentres(800, centres)).toBeCloseTo(0.5);
+    expect(progressFromCentres(1200, centres)).toBe(1);
+    expect(progressFromCentres(1800, centres)).toBeCloseTo(1.75);
+  });
+  it("handles no sections", () => {
+    expect(progressFromCentres(300, [])).toBe(0);
+  });
+});
+
+describe("keyboard throttle", () => {
+  it("revs on Space and Enter only", () => {
+    expect(isThrottleKey(" ")).toBe(true);
+    expect(isThrottleKey("Enter")).toBe(true);
+    expect(isThrottleKey("a")).toBe(false);
+    expect(isThrottleKey("Tab")).toBe(false);
   });
 });

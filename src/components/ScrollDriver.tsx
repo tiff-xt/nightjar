@@ -2,6 +2,9 @@
 import { useEffect } from "react";
 import { engine, targetRpm } from "@/lib/engineSound";
 import { store } from "@/lib/store";
+import { isThrottleKey, progressFromCentres } from "@/lib/story";
+
+const onThrottle = (e: Event) => !!(e.target as HTMLElement | null)?.closest?.("[data-throttle]");
 
 /**
  * Converts page scroll into continuous story progress (section index +
@@ -13,20 +16,18 @@ export function ScrollDriver() {
     let lastY = scrollY;
     let lastT = performance.now();
     let speed = 0;
+    // Section centres are measured only when layout changes, not every frame:
+    // reading offsetTop after the scene writes styles forces a synchronous reflow.
+    let centres: number[] = [];
+    const measure = () => {
+      centres = [...document.querySelectorAll<HTMLElement>("[data-shot]")].map((s) => s.offsetTop + s.offsetHeight / 2);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.body);
+
     const tick = (now: number) => {
-      const sections = [...document.querySelectorAll<HTMLElement>("[data-shot]")];
-      const mid = scrollY + innerHeight / 2;
-      const centres = sections.map((s) => s.offsetTop + s.offsetHeight / 2);
-      let p = 0;
-      if (centres.length) {
-        if (mid <= centres[0]) p = 0;
-        else if (mid >= centres[centres.length - 1]) p = centres.length - 1;
-        else {
-          const i = centres.findIndex((c, j) => mid >= c && mid < centres[j + 1]);
-          p = i + (mid - centres[i]) / (centres[i + 1] - centres[i]);
-        }
-      }
-      store.progress = p;
+      store.progress = progressFromCentres(scrollY + innerHeight / 2, centres);
 
       const dt = Math.max(1, now - lastT) / 1000;
       const v = (scrollY - lastY) / dt;
@@ -38,18 +39,34 @@ export function ScrollDriver() {
     };
     let throttle = false;
     const down = (e: Event) => {
-      if ((e.target as HTMLElement).closest?.("[data-throttle]")) throttle = true;
+      if (onThrottle(e)) throttle = true;
     };
     const up = () => (throttle = false);
+    // Keyboard: hold Space or Enter on the focused "Hold to rev" button.
+    const keyDown = (e: KeyboardEvent) => {
+      if (!isThrottleKey(e.key) || !onThrottle(e)) return;
+      e.preventDefault();
+      throttle = true;
+    };
+    const keyUp = (e: KeyboardEvent) => {
+      if (isThrottleKey(e.key)) throttle = false;
+    };
     window.addEventListener("pointerdown", down);
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
+    window.addEventListener("keydown", keyDown);
+    window.addEventListener("keyup", keyUp);
+    window.addEventListener("blur", up);
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
+      ro.disconnect();
       window.removeEventListener("pointerdown", down);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
+      window.removeEventListener("keydown", keyDown);
+      window.removeEventListener("keyup", keyUp);
+      window.removeEventListener("blur", up);
     };
   }, []);
   return null;

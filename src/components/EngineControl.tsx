@@ -30,10 +30,10 @@ export function EngineControl() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2 sm:bottom-6 sm:right-6">
+    <div className="fixed bottom-4 right-4 z-40 flex max-w-[calc(100vw-2rem)] flex-wrap items-center justify-end gap-2 sm:bottom-6 sm:right-6">
       {on && (
-        <div className="hud flex h-11 items-center gap-3 rounded-full px-4" aria-hidden>
-          <span className="relative block h-1 w-20 overflow-hidden rounded-full bg-white/10">
+        <div className="hud flex h-11 items-center gap-2 rounded-full px-3 sm:gap-3 sm:px-4" aria-hidden>
+          <span className="relative block h-1 w-12 overflow-hidden sm:w-20 rounded-full bg-white/10">
             <span
               ref={needle}
               className="absolute inset-0 origin-left bg-[var(--ember)]"
@@ -41,7 +41,7 @@ export function EngineControl() {
             />
           </span>
           <span ref={readout} className="w-12 text-right font-mono text-[11px] tabular-nums text-white/80" />
-          <span className="font-mono text-[10px] text-white/40">RPM</span>
+          <span className="hidden font-mono text-[10px] text-white/40 sm:inline">RPM</span>
         </div>
       )}
       {on && (
@@ -56,10 +56,10 @@ export function EngineControl() {
       <button
         type="button"
         onClick={toggle}
-        aria-pressed={on}
         className="hud group flex h-11 items-center gap-2 rounded-full pl-3 pr-4 font-mono text-[11px] uppercase tracking-widest text-white"
       >
         <span
+          aria-hidden
           className={`size-2 rounded-full transition-colors ${on ? "bg-[var(--ember)] shadow-[0_0_10px_var(--ember)]" : "bg-white/30"}`}
         />
         {on ? "Kill engine" : "Start engine"}

@@ -194,7 +194,8 @@ export default function Garage() {
   const [dpr, setDpr] = useState(1.5);
   return (
     <Canvas
-      shadows
+      // PCF: three r18x removed PCFSoftShadowMap (R3F's default for `shadows`) and warns on fallback.
+      shadows="percentage"
       dpr={dpr}
       camera={{ position: [3.1, 1.05, 2.9], fov: 32, near: 0.05, far: 60 }}
       gl={{

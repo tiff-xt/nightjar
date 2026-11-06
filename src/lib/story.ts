@@ -51,3 +51,20 @@ export const explodeAt = (p: number) => window01(p, idx("exploded") - 0.1, idx("
 export const nightAt = (p: number) => window01(p, idx("after-dark") - 0.1, idx("after-dark") + 0.3, 0.4);
 /** Callout labels for a section are visible near its hold point. */
 export const calloutsAt = (p: number, id: string) => window01(p, idx(id) - 0.05, idx(id) + 0.3, 0.2);
+
+/**
+ * Story progress from the viewport midline and the section centres (page Y):
+ * the section index plus the fraction of the way to the next centre.
+ */
+export function progressFromCentres(mid: number, centres: number[]): number {
+  const n = centres.length;
+  if (n === 0 || mid <= centres[0]) return 0;
+  if (mid >= centres[n - 1]) return n - 1;
+  for (let i = 0; i < n - 1; i++) {
+    if (mid >= centres[i] && mid < centres[i + 1]) return i + (mid - centres[i]) / (centres[i + 1] - centres[i]);
+  }
+  return n - 1;
+}
+
+/** Keys that hold the throttle when the "Hold to rev" button has focus (same keys that press a button). */
+export const isThrottleKey = (key: string) => key === " " || key === "Enter";

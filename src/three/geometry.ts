@@ -209,3 +209,79 @@ export function beam(points: P3[], radius: number, segments = 48) {
   );
   return new THREE.TubeGeometry(curve, segments, radius, 6, false);
 }
+
+/** Piecewise-linear lookup through [x, value] stops (stops in any x order). */
+export function lerpStops(stops: [number, number][], x: number) {
+  const st = [...stops].sort((a, b) => a[0] - b[0]);
+  if (x <= st[0][0]) return st[0][1];
+  for (let i = 1; i < st.length; i++) {
+    if (x <= st[i][0]) {
+      const [x0, y0] = st[i - 1];
+      const [x1, y1] = st[i];
+      return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+    }
+  }
+  return st[st.length - 1][1];
+}
+
+/**
+ * Taper an extruded side panel across its width: z is scaled by a factor
+ * looked up from the vertex's x. Turns slab-like extrusions into organic,
+ * narrowing shapes (seats, tails, tanks).
+ */
+export function taperZ(geo: THREE.BufferGeometry, stops: [number, number][]) {
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) pos.setZ(i, pos.getZ(i) * lerpStops(stops, pos.getX(i)));
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/**
+ * Motorcycle fender: a thin blade following the wheel, widest in the middle
+ * and narrowing to its ends, with an optional pointed beak at the leading
+ * end. Angles are radians from +x, counter-clockwise; `from` is the beak end.
+ */
+export function fender(inner: number, outer: number, from: number, to: number, width: number, beak = 0) {
+  const s = new THREE.Shape();
+  const n = 48;
+  const outerAt = (a: number) => {
+    const t = (a - from) / (to - from);
+    // Slightly thicker crown, thinning at both ends.
+    return outer + (outer - inner) * 0.6 * Math.sin(Math.PI * t);
+  };
+  for (let i = 0; i <= n; i++) {
+    const a = from + ((to - from) * i) / n;
+    const r = outerAt(a);
+    if (i === 0) s.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    else s.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  for (let i = n; i >= 0; i--) {
+    const a = from + ((to - from) * i) / n;
+    s.lineTo(Math.cos(a) * inner, Math.sin(a) * inner);
+  }
+  if (beak > 0) {
+    // Pointed lip ahead of the leading end.
+    const a = from - 0.12;
+    s.lineTo(Math.cos(a) * (inner + beak), Math.sin(a) * (inner + beak));
+  }
+  s.closePath();
+  const geo = new THREE.ExtrudeGeometry(s, {
+    depth: width,
+    bevelEnabled: true,
+    bevelThickness: 0.004,
+    bevelSize: 0.003,
+    bevelSegments: 2,
+    curveSegments: 8,
+  });
+  geo.translate(0, 0, -width / 2);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const a = Math.atan2(pos.getY(i), pos.getX(i));
+    const t = Math.min(1, Math.max(0, (a - from) / (to - from)));
+    pos.setZ(i, pos.getZ(i) * (0.4 + 0.6 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.15)), 0.5)));
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  return geo;
+}

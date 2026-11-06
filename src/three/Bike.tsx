@@ -7,6 +7,8 @@ import { frameById, paintById } from "@/lib/colorways";
 import { store } from "@/lib/store";
 import { explodeAt, nightAt } from "@/lib/story";
 import {
+  fender,
+  taperZ,
   arcBand,
   beam,
   coil,
@@ -163,6 +165,7 @@ function Panel({
   bevel = 0.01,
   material,
   rotation,
+  taper,
 }: {
   profile: P2[];
   width: number;
@@ -170,9 +173,14 @@ function Panel({
   bevel?: number;
   material: THREE.Material;
   rotation?: [number, number, number];
+  /** [x, scale] stops narrowing the panel's width (and offset) along x. */
+  taper?: [number, number][];
 }) {
-  const geo = useMemo(() => panel(profile, width, 0, bevel), [profile, width, bevel]);
-  return <mesh geometry={geo} position={[0, 0, z]} rotation={rotation} material={material} castShadow receiveShadow />;
+  const geo = useMemo(() => {
+    const g = panel(profile, width, z, bevel);
+    return taper ? taperZ(g, taper) : g;
+  }, [profile, width, z, bevel, taper]);
+  return <mesh geometry={geo} rotation={rotation} material={material} castShadow receiveShadow />;
 }
 
 /** Mirror a part across the bike's centre plane. */
@@ -574,7 +582,7 @@ function Exhaust({ m }: { m: Mats }) {
       <RBox size={[0.18, 0.07, 0.15]} radius={0.025} position={[-0.04, 0.22, 0]} material={m.gunmetal} />
       <mesh geometry={geo.link} material={m.exhaust} castShadow />
       {/* Big stubby silencer beside the rear tyre: brushed silver body, black upper shield, angled cap */}
-      <group position={[-0.47, 0.42, -0.22]} rotation={[0, 0, 0.5]}>
+      <group position={[-0.48, 0.43, -0.22]} rotation={[0, 0, -0.42]}>
         <RBox size={[0.36, 0.125, 0.115]} radius={0.04} position={[0, 0, 0]} material={m.brushed} />
         <RBox size={[0.3, 0.06, 0.124]} radius={0.02} position={[0.015, 0.04, 0]} material={m.satinBlack} />
         <RBox
@@ -590,7 +598,7 @@ function Exhaust({ m }: { m: Mats }) {
         <RBox size={[0.04, 0.12, 0.118]} radius={0.015} position={[0.17, -0.005, 0]} material={m.gunmetal} />
       </group>
       {/* Hanger to the pillion peg bracket */}
-      <Rod a={[-0.5, 0.53, -0.2]} b={[-0.47, 0.64, -0.14]} r={0.008} material={m.satinBlack} />
+      <Rod a={[-0.58, 0.53, -0.2]} b={[-0.5, 0.64, -0.14]} r={0.008} material={m.satinBlack} />
     </group>
   );
 }
@@ -598,35 +606,38 @@ function Exhaust({ m }: { m: Mats }) {
 /* ─── Bodywork ───────────────────────────────────────────────────── */
 
 const TANK: P2[] = [
-  [0.36, 1.03],
-  [0.24, 1.09],
-  [0.08, 1.075],
-  [-0.04, 1.02],
+  [0.33, 0.93],
+  [0.25, 1.05],
+  [0.17, 1.085],
+  [0.04, 1.075],
+  [-0.05, 1.02],
   [-0.1, 0.95],
   [-0.09, 0.87],
   [0.1, 0.84],
-  [0.3, 0.87],
-  [0.4, 0.95],
+  [0.27, 0.85],
+  [0.35, 0.88],
 ];
 /** Tank shroud: wraps the tank's front flank and drops down to the radiator. */
 const SHROUD: P2[] = [
-  [0.12, 1.02],
-  [0.36, 1.035],
-  [0.47, 0.98],
-  [0.5, 0.9],
-  [0.45, 0.8],
-  [0.4, 0.71],
-  [0.32, 0.69],
-  [0.27, 0.78],
-  [0.19, 0.87],
-  [0.1, 0.9],
+  [0.08, 0.99],
+  [0.19, 1.035],
+  [0.26, 1.0],
+  [0.36, 0.91],
+  [0.46, 0.82],
+  [0.5, 0.775],
+  [0.44, 0.76],
+  [0.38, 0.7],
+  [0.31, 0.69],
+  [0.26, 0.77],
+  [0.17, 0.86],
+  [0.08, 0.9],
 ];
 /** Silver accent line along the shroud's upper crease. */
 const SHROUD_LINE: P2[] = [
-  [0.2, 0.955],
-  [0.44, 0.92],
-  [0.45, 0.905],
-  [0.21, 0.94],
+  [0.17, 0.965],
+  [0.42, 0.825],
+  [0.43, 0.81],
+  [0.18, 0.95],
 ];
 /** Black radiator side grille in front of the engine, below the shroud. */
 const RAD_SIDE: P2[] = [
@@ -647,22 +658,35 @@ const BELLY: P2[] = [
   [0.26, 0.34],
 ];
 const TAIL: P2[] = [
-  [-0.4, 0.925],
-  [-0.6, 0.99],
-  [-0.78, 1.05],
-  [-0.94, 1.115],
-  [-0.96, 1.095],
-  [-0.82, 1.005],
-  [-0.62, 0.925],
+  [-0.42, 0.93],
+  [-0.58, 0.955],
+  [-0.72, 0.99],
+  [-0.84, 1.03],
+  [-0.96, 1.075],
+  [-0.97, 1.055],
+  [-0.87, 0.995],
+  [-0.72, 0.93],
+  [-0.56, 0.875],
   [-0.44, 0.86],
 ];
 const TAIL_STRIPE: P2[] = [
-  [-0.55, 0.955],
-  [-0.86, 1.06],
-  [-0.87, 1.05],
-  [-0.57, 0.945],
+  [-0.62, 0.945],
+  [-0.9, 1.035],
+  [-0.91, 1.025],
+  [-0.64, 0.935],
 ];
 /** Small black side panel under the seat nose, above the pivot. */
+const TAIL_TAPER: [number, number][] = [
+  [-0.42, 1],
+  [-0.7, 0.82],
+  [-0.97, 0.3],
+];
+const TANK_TAPER: [number, number][] = [
+  [0.36, 0.78],
+  [0.2, 1],
+  [0.0, 1],
+  [-0.12, 0.72],
+];
 const SIDE_COVER: P2[] = [
   [-0.08, 0.86],
   [-0.3, 0.88],
@@ -672,7 +696,7 @@ const SIDE_COVER: P2[] = [
 function Bodywork({ m }: { m: Mats }) {
   return (
     <group>
-      <Panel profile={TANK} width={0.3} bevel={0.045} material={m.paint} />
+      <Panel profile={TANK} width={0.3} bevel={0.045} material={m.paint} taper={TANK_TAPER} />
       <Disc r={0.034} depth={0.012} position={[0.07, 1.072, 0]} material={m.gunmetal} />
       <mesh position={[0.07, 1.075, 0]} rotation={[0, 0, 0]} material={m.accent}>
         <torusGeometry args={[0.028, 0.002, 6, 32]} />
@@ -696,26 +720,33 @@ function Bodywork({ m }: { m: Mats }) {
               />
             ))}
             <Panel profile={SIDE_COVER} width={0.012} z={s * 0.13} bevel={0.003} material={m.paint} />
-            <Panel profile={TAIL_STRIPE} width={0.003} z={s * 0.101} bevel={0.001} material={m.accent} />
+            <Panel
+              profile={TAIL_STRIPE}
+              width={0.003}
+              z={s * 0.101}
+              bevel={0.001}
+              material={m.accent}
+              taper={TAIL_TAPER}
+            />
             {/* Indicators on the plate hanger */}
-            <mesh position={[-0.9, 0.93, s * 0.085]} rotation={[Math.PI / 2, 0, 0]} material={m.amber}>
+            <mesh position={[-0.98, 0.87, s * 0.085]} rotation={[Math.PI / 2, 0, 0]} material={m.amber}>
               <capsuleGeometry args={[0.009, 0.028, 4, 10]} />
             </mesh>
           </group>
         )}
       </Pair>
-      <Panel profile={TAIL} width={0.2} bevel={0.02} material={m.paint} />
+      <Panel profile={TAIL} width={0.2} bevel={0.02} material={m.paint} taper={TAIL_TAPER} />
       <Panel profile={BELLY} width={0.25} bevel={0.012} material={m.satinBlack} />
       {/* Tail light: a thin red blade at the tip */}
-      <mesh position={[-0.952, 1.1, 0]} rotation={[0, 0, 0.36]} material={m.tail}>
-        <boxGeometry args={[0.008, 0.026, 0.15]} />
+      <mesh position={[-0.966, 1.064, 0]} rotation={[0, 0, 0.36]} material={m.tail}>
+        <boxGeometry args={[0.008, 0.022, 0.06]} />
       </mesh>
       {/* Plate hanger */}
-      <Rod a={[-0.74, 0.97, 0]} b={[-0.93, 0.8, 0]} r={0.012} material={m.satinBlack} />
+      <Rod a={[-0.8, 0.98, 0]} b={[-0.99, 0.82, 0]} r={0.012} material={m.satinBlack} />
       <RBox
         size={[0.008, 0.12, 0.18]}
         radius={0.003}
-        position={[-0.945, 0.75, 0]}
+        position={[-1.005, 0.76, 0]}
         rotation={[0, 0, -0.15]}
         material={m.satinBlack}
       />
@@ -723,42 +754,65 @@ function Bodywork({ m }: { m: Mats }) {
   );
 }
 
+const RIDER_TAPER: [number, number][] = [
+  [-0.03, 0.42],
+  [-0.15, 1],
+  [-0.4, 1],
+  [-0.53, 0.86],
+];
+const PILLION_TAPER: [number, number][] = [
+  [-0.5, 1],
+  [-0.84, 0.7],
+];
+
 function Seat({ m }: { m: Mats }) {
   return (
     <group>
-      {/* Rider: low and long, dished, rising at the back */}
+      {/* Rider: narrow at the tank, scooped low, curling up at the back */}
       <Panel
         profile={[
-          [-0.05, 0.925],
-          [-0.11, 0.895],
-          [-0.2, 0.878],
-          [-0.3, 0.882],
-          [-0.38, 0.9],
-          [-0.45, 0.94],
-          [-0.49, 0.965],
-          [-0.5, 0.93],
-          [-0.42, 0.87],
-          [-0.24, 0.835],
-          [-0.08, 0.855],
+          [-0.03, 0.935],
+          [-0.08, 0.905],
+          [-0.15, 0.888],
+          [-0.25, 0.882],
+          [-0.34, 0.886],
+          [-0.41, 0.9],
+          [-0.46, 0.922],
+          [-0.5, 0.95],
+          [-0.525, 0.965],
+          [-0.535, 0.945],
+          [-0.5, 0.9],
+          [-0.42, 0.865],
+          [-0.25, 0.845],
+          [-0.1, 0.855],
+          [-0.04, 0.88],
         ]}
         width={0.28}
-        bevel={0.03}
+        bevel={0.032}
         material={m.seat}
+        taper={RIDER_TAPER}
       />
-      {/* Pillion: a short ramp that follows the tail's slope */}
+      {/* Stitch line at the step */}
+      <mesh position={[-0.525, 0.962, 0]} material={m.satinBlack}>
+        <boxGeometry args={[0.006, 0.006, 0.22]} />
+      </mesh>
+      {/* Pillion pad: raised, following the tail's rake */}
       <Panel
         profile={[
-          [-0.47, 0.965],
-          [-0.55, 0.99],
-          [-0.68, 1.03],
-          [-0.74, 1.045],
-          [-0.75, 1.02],
-          [-0.6, 0.965],
-          [-0.49, 0.93],
+          [-0.5, 0.975],
+          [-0.58, 0.993],
+          [-0.68, 1.015],
+          [-0.78, 1.04],
+          [-0.835, 1.05],
+          [-0.845, 1.03],
+          [-0.72, 0.99],
+          [-0.58, 0.955],
+          [-0.51, 0.945],
         ]}
-        width={0.19}
-        bevel={0.022}
+        width={0.2}
+        bevel={0.024}
         material={m.seat}
+        taper={PILLION_TAPER}
       />
     </group>
   );
@@ -841,8 +895,8 @@ function FrontEnd({ m }: { m: Mats }) {
         ],
         0.014,
       ),
-      fender: arcBand(0.312, 0.326, 0.55, 1.85, 0.12),
-      fenderStripe: arcBand(0.326, 0.329, 0.7, 1.75, 0.012, 0.001),
+      fender: fender(0.31, 0.32, 0.28, 1.62, 0.105, 0.035),
+      fenderStripe: arcBand(0.33, 0.333, 0.6, 1.35, 0.006, 0.001),
     }),
     [x0],
   );
@@ -958,13 +1012,13 @@ function FrontEnd({ m }: { m: Mats }) {
       {/* Angular headlight: a sharp cowl with a brow over a faceted lens */}
       <Panel
         profile={[
-          [0.43, 1.0],
-          [0.535, 0.985],
-          [0.6, 0.925],
+          [0.455, 0.965],
+          [0.54, 0.96],
+          [0.6, 0.922],
           [0.585, 0.86],
           [0.545, 0.8],
           [0.48, 0.79],
-          [0.42, 0.85],
+          [0.44, 0.85],
         ]}
         width={0.19}
         bevel={0.014}
@@ -973,10 +1027,10 @@ function FrontEnd({ m }: { m: Mats }) {
       {/* Brow: a gunmetal blade over the lens */}
       <Panel
         profile={[
-          [0.5, 0.995],
-          [0.6, 0.94],
-          [0.612, 0.925],
-          [0.52, 0.965],
+          [0.5, 0.968],
+          [0.6, 0.935],
+          [0.612, 0.92],
+          [0.52, 0.952],
         ]}
         width={0.2}
         bevel={0.004}
@@ -1026,7 +1080,7 @@ function RearEnd({ m }: { m: Mats }) {
       ),
       frontSprocket: sprocket(0.045, 15, 0.006, 0),
       shockSpring: coil([-0.31, 0.42, 0], [-0.19, 0.69, 0], 0.033, 8, 0.006),
-      hugger: arcBand(0.33, 0.341, 0.95, 2.6, 0.15),
+      hugger: fender(0.33, 0.342, 2.75, 0.95, 0.16),
     }),
     [],
   );

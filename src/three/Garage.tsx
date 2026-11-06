@@ -20,11 +20,23 @@ import { Callouts } from "./Callouts";
 const reduceMotion = () => typeof window !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Camera follows the scroll story with critically damped easing, plus a little pointer parallax. */
+/** Fixed inspection angles via ?view= (for design review and screenshots). */
+const INSPECT: Record<string, { position: [number, number, number]; target: [number, number, number]; fov: number }> = {
+  side: { position: [0, 0.68, 4.2], target: [0, 0.66, 0], fov: 30 },
+  front34: { position: [2.4, 1.15, 2.4], target: [0, 0.66, 0], fov: 30 },
+  rear34: { position: [-2.4, 1.2, 2.2], target: [0, 0.66, 0], fov: 30 },
+  engine: { position: [0.35, 0.62, 1.35], target: [0.05, 0.55, 0], fov: 34 },
+  cockpit: { position: [-0.55, 1.55, 0.9], target: [0.4, 0.98, 0], fov: 34 },
+};
+const inspectView = () =>
+  typeof window === "undefined" ? undefined : INSPECT[new URLSearchParams(location.search).get("view") ?? ""];
+
 function CameraRig() {
   const look = useRef(new THREE.Vector3(0, 0.6, 0));
   const first = useRef(true);
   useFrame(({ camera, pointer }, dt) => {
-    const shot = shotAt(store.progress);
+    const inspect = inspectView();
+    const shot = inspect ? { ...inspect, shift: 0, id: "inspect" } : shotAt(store.progress);
     const cam = camera as THREE.PerspectiveCamera;
     const k = first.current || reduceMotion() ? 1 : 1 - Math.exp(-dt * 3.2);
     first.current = false;

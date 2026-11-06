@@ -66,3 +66,146 @@ export function panel(profile: P2[], width: number, z = 0, bevel = 0.012) {
   geo.computeVertexNormals();
   return geo;
 }
+
+/* ─── Detail kit ─────────────────────────────────────────────────── */
+
+/**
+ * Tyre: a lathe of a rounded, superelliptic cross-section, turned to spin
+ * around Z. `rim` is the bead radius, `outer` the tread radius.
+ */
+export function tyre(rim: number, outer: number, width: number, segments = 72) {
+  const h = outer - rim;
+  const pts: THREE.Vector2[] = [];
+  const n = 2.6; // squareness of the profile: rounder crown on sport tyres
+  for (let i = 0; i <= 28; i++) {
+    const th = (i / 28) * Math.PI;
+    const c = Math.cos(th);
+    const s = Math.sin(th);
+    const x = (width / 2) * Math.sign(c) * Math.pow(Math.abs(c), 2 / n);
+    const r = rim + h * Math.pow(s, 2 / n);
+    pts.push(new THREE.Vector2(r, x));
+  }
+  const geo = new THREE.LatheGeometry(pts, segments);
+  geo.rotateX(Math.PI / 2);
+  return geo;
+}
+
+/** A band of a circle (fenders, hugger): annulus sector extruded across Z. */
+export function arcBand(inner: number, outer: number, from: number, to: number, width: number, bevel = 0.004) {
+  const s = new THREE.Shape();
+  s.absarc(0, 0, outer, from, to, false);
+  s.absarc(0, 0, inner, to, from, true);
+  s.closePath();
+  const depth = Math.max(0.001, width - bevel * 2);
+  const geo = new THREE.ExtrudeGeometry(s, {
+    depth,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelSegments: 2,
+    curveSegments: 40,
+  });
+  geo.translate(0, 0, -depth / 2);
+  return geo;
+}
+
+/** Brake rotor with a ring of drilled holes and a wavy (petal) outer edge. Faces +Z. */
+export function rotor(outer: number, inner: number, holes = 24, thickness = 0.005) {
+  const s = new THREE.Shape();
+  const petals = 12;
+  for (let i = 0; i <= 120; i++) {
+    const a = (i / 120) * Math.PI * 2;
+    const r = outer * (1 - 0.025 * (0.5 + 0.5 * Math.cos(a * petals)));
+    if (i === 0) s.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    else s.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  const hub = new THREE.Path();
+  hub.absarc(0, 0, inner, 0, Math.PI * 2, true);
+  s.holes.push(hub);
+  const ringR = (outer + inner) / 2 + (outer - inner) * 0.08;
+  for (let i = 0; i < holes; i++) {
+    const a = (i / holes) * Math.PI * 2;
+    const rr = ringR + (i % 2 ? 0.012 : -0.012);
+    const h = new THREE.Path();
+    h.absarc(Math.cos(a) * rr, Math.sin(a) * rr, 0.0045, 0, Math.PI * 2, true);
+    s.holes.push(h);
+  }
+  const geo = new THREE.ExtrudeGeometry(s, { depth: thickness, bevelEnabled: false, curveSegments: 10 });
+  geo.translate(0, 0, -thickness / 2);
+  return geo;
+}
+
+/** Sprocket: toothed disc with lightening holes. Faces +Z. */
+export function sprocket(radius: number, teeth: number, thickness = 0.006, windows = 5) {
+  const s = new THREE.Shape();
+  const tip = radius;
+  const root = radius - 0.009;
+  const steps = teeth * 4;
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * Math.PI * 2;
+    const phase = i % 4;
+    const r = phase === 1 || phase === 2 ? tip : root;
+    if (i === 0) s.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    else s.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  const hub = new THREE.Path();
+  hub.absarc(0, 0, radius * 0.22, 0, Math.PI * 2, true);
+  s.holes.push(hub);
+  if (windows > 0) {
+    for (let i = 0; i < windows; i++) {
+      const a = (i / windows) * Math.PI * 2;
+      const w = new THREE.Path();
+      w.absarc(Math.cos(a) * radius * 0.55, Math.sin(a) * radius * 0.55, radius * 0.2, 0, Math.PI * 2, true);
+      s.holes.push(w);
+    }
+  }
+  const geo = new THREE.ExtrudeGeometry(s, { depth: thickness, bevelEnabled: false, curveSegments: 8 });
+  geo.translate(0, 0, -thickness / 2);
+  return geo;
+}
+
+/** Split 'Y' wheel spoke from hub to rim, in the XY plane, pointing along +X. Faces +Z. */
+export function ySpoke(hub: number, rim: number, thickness = 0.022) {
+  const split = hub + (rim - hub) * 0.55;
+  const s = new THREE.Shape();
+  s.moveTo(hub, -0.016);
+  s.lineTo(split, -0.011);
+  s.quadraticCurveTo(rim - 0.02, -0.05, rim + 0.004, -0.058);
+  s.lineTo(rim + 0.004, -0.04);
+  s.quadraticCurveTo(split + 0.04, -0.012, split + 0.035, 0);
+  s.quadraticCurveTo(split + 0.04, 0.012, rim + 0.004, 0.04);
+  s.lineTo(rim + 0.004, 0.058);
+  s.quadraticCurveTo(rim - 0.02, 0.05, split, 0.011);
+  s.lineTo(hub, 0.016);
+  s.closePath();
+  const geo = new THREE.ExtrudeGeometry(s, {
+    depth: thickness,
+    bevelEnabled: true,
+    bevelThickness: 0.004,
+    bevelSize: 0.003,
+    bevelSegments: 2,
+    curveSegments: 12,
+  });
+  geo.translate(0, 0, -thickness / 2);
+  return geo;
+}
+
+/** A closed loop (e.g. a chain) through points, as a thin tube. */
+export function loop(points: P3[], radius: number, segments = 160) {
+  const curve = new THREE.CatmullRomCurve3(
+    points.map((p) => new THREE.Vector3(...p)),
+    true,
+    "centripetal",
+  );
+  return new THREE.TubeGeometry(curve, segments, radius, 6, true);
+}
+
+/** Sweep with a squarer section (frame spars, swingarm-like beams). */
+export function beam(points: P3[], radius: number, segments = 48) {
+  const curve = new THREE.CatmullRomCurve3(
+    points.map((p) => new THREE.Vector3(...p)),
+    false,
+    "centripetal",
+  );
+  return new THREE.TubeGeometry(curve, segments, radius, 6, false);
+}

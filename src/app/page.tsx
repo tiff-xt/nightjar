@@ -4,14 +4,14 @@ import { ScrollDriver } from "@/components/ScrollDriver";
 import { Stage } from "@/components/Stage";
 
 const specs = [
-  ["Engine", "890 cc 75° V-twin, liquid-cooled"],
-  ["Output", "121 hp @ 9,500 rpm · 98 Nm"],
-  ["Frame", "Chromoly steel trellis"],
-  ["Suspension", "43 mm inverted fork · monoshock"],
-  ["Brakes", "Twin 320 mm discs, radial calipers"],
-  ["Weight", "184 kg dry"],
-  ["Seat height", "825 mm"],
-  ["Tank", "14 L"],
+  ["Engine", "760 cc parallel twin, 270° crank, liquid-cooled"],
+  ["Output", "96 hp @ 9,800 rpm · 78 Nm"],
+  ["Frame", "Steel diamond, engine as a stressed member"],
+  ["Suspension", "41 mm inverted fork · linkage monoshock"],
+  ["Brakes", "Twin 296 mm discs, radial calipers"],
+  ["Weight", "188 kg wet"],
+  ["Seat height", "800 mm"],
+  ["Tank", "15 L"],
 ];
 
 export default function Home() {
@@ -43,7 +43,7 @@ export default function Home() {
       <main id="top">
         {/* 0 Hero */}
         <section data-shot="hero" className="relative flex min-h-[100svh] flex-col justify-end px-5 pb-20 sm:px-10">
-          <p className="eyebrow mb-5">Naked · Streetfighter · 2027</p>
+          <p className="eyebrow mb-5">Naked · Roadster · 2027</p>
           <h1 className="chrome-type font-display text-[clamp(4.5rem,19vw,17rem)] font-black uppercase leading-[0.8] tracking-[-0.01em]">
             Nightjar
           </h1>
@@ -61,8 +61,8 @@ export default function Home() {
             <p className="eyebrow mb-4">01 · Chassis</p>
             <h2 className="font-display text-6xl font-black uppercase leading-[0.85] sm:text-8xl">Show the bones.</h2>
             <p className="mt-5 leading-relaxed text-white/70">
-              A chromoly trellis you&apos;re meant to look at. Every tube is triangulated and every weld is on show,
-              wrapped by a faceted tank cut like a blade.
+              A steel diamond frame you&apos;re meant to look at, with the engine hung as a stressed member and a tall,
+              faceted tank cut like a blade.
             </p>
           </div>
         </section>
@@ -75,8 +75,8 @@ export default function Home() {
               Two hearts. One beat.
             </h2>
             <p className="mt-5 leading-relaxed text-white/70">
-              An 890 cc 75° V-twin with an uneven firing order you feel in your chest. Start the engine below and
-              scroll: the faster you move, the harder it revs.
+              A 760 cc parallel twin with a 270° crank: the lumpy, uneven beat of a big twin in half the width. Start
+              the engine below and scroll: the faster you move, the harder it revs.
             </p>
           </div>
         </section>

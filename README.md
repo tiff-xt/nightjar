@@ -17,8 +17,10 @@ There's no downloaded model. `src/three/Bike.tsx` builds the bike from primitive
   - swept tubes for the exhaust headers
   - coil springs
   - extruded side-profile panels with bevels, which give the faceted tank and tail
-- **Frame:** a triangulated chromoly-style trellis, mirrored left and right.
-- **Engine:** a 75° V-twin with cooling fins.
+- **Frame:** a steel diamond frame with the engine as a stressed member, pivot plates and a tubular subframe.
+- **Engine:** a forward-tilted parallel twin with cooling fins, a radiator, and detailed covers.
+- **Running gear:** tyres lathed from a real tyre profile, split-spoke wheels, drilled floating rotors with radial calipers, inverted forks, a box-section swingarm, chain and sprockets, and a linkage monoshock.
+- **Finish:** gloss black bodywork with red and gunmetal accents by default. The proportions follow the modern middleweight naked bike, with no real brand's design, logos or graphics.
 - **Wheels:** split spokes and radial calipers.
 - **Suspension:** inverted forks and a monoshock with a coil spring.
 - **Exploded view:** seven assemblies, each with its own vector, so the bike can come apart in the anatomy section.
@@ -44,7 +46,7 @@ There's no downloaded model. `src/three/Bike.tsx` builds the bike from primitive
   beam, garage dims) and the 3D-anchored callouts.
 - These are pure functions with tests.
 
-### Synthesised V-twin
+### Synthesised parallel twin
 
 `src/lib/engineSound.ts` makes the engine sound with no audio samples:
 

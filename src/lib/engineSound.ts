@@ -1,5 +1,5 @@
 /**
- * A synthesised V-twin. No samples: the firing pulses come from a sawtooth at
+ * A synthesised 270°-crank parallel twin (it fires like a 90° V-twin). No samples: the firing pulses come from a sawtooth at
  * the firing frequency, shaped by an uneven "potato" amplitude pattern (two
  * close beats, then a gap), driven through a soft-clipping waveshaper and an
  * intake-like low-pass that opens with revs. Mechanical noise rides on top.

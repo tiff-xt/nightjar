@@ -8,8 +8,8 @@ type Listener = () => void;
 class Store {
   /** Continuous story position: section index + fraction (0 = hero). */
   progress = 0;
-  paint = "liquid-silver";
-  frame = "satin";
+  paint = "obsidian";
+  frame = "gunmetal";
   engineOn = false;
   rpm = 0;
   /** User drag rotation in the configurator, radians. */

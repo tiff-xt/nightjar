@@ -9,11 +9,11 @@ import { ANCHORS } from "./Bike";
 type Callout = { anchor: keyof typeof ANCHORS; section: string; label: string; value: string; side: "left" | "right" };
 
 const CALLOUTS: Callout[] = [
-  { anchor: "trellis", section: "trellis", label: "Frame", value: "Chromoly trellis, 9.1 kg", side: "left" },
-  { anchor: "tank", section: "trellis", label: "Tank", value: "14 L, faceted aluminium", side: "right" },
-  { anchor: "cylinders", section: "twin", label: "Engine", value: "890 cc 75° V-twin", side: "right" },
-  { anchor: "engine", section: "twin", label: "Output", value: "121 hp · 98 Nm", side: "left" },
-  { anchor: "shock", section: "twin", label: "Rear shock", value: "Fully adjustable", side: "left" },
+  { anchor: "trellis", section: "trellis", label: "Frame", value: "Steel diamond frame", side: "left" },
+  { anchor: "tank", section: "trellis", label: "Tank", value: "15 L, faceted steel", side: "right" },
+  { anchor: "cylinders", section: "twin", label: "Engine", value: "760 cc parallel twin", side: "right" },
+  { anchor: "engine", section: "twin", label: "Output", value: "96 hp · 78 Nm", side: "left" },
+  { anchor: "shock", section: "twin", label: "Rear shock", value: "Linkage monoshock", side: "left" },
 ];
 
 /** HTML labels pinned to points on the bike, with a leader line. */

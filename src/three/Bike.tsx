@@ -729,7 +729,7 @@ function Bodywork({ m }: { m: Mats }) {
               taper={TAIL_TAPER}
             />
             {/* Indicators on the plate hanger */}
-            <mesh position={[-0.98, 0.87, s * 0.085]} rotation={[Math.PI / 2, 0, 0]} material={m.amber}>
+            <mesh position={[-1.02, 0.965, s * 0.07]} rotation={[Math.PI / 2, 0, 0]} material={m.amber}>
               <capsuleGeometry args={[0.009, 0.028, 4, 10]} />
             </mesh>
           </group>
@@ -741,15 +741,51 @@ function Bodywork({ m }: { m: Mats }) {
       <mesh position={[-0.966, 1.064, 0]} rotation={[0, 0, 0.36]} material={m.tail}>
         <boxGeometry args={[0.008, 0.022, 0.06]} />
       </mesh>
-      {/* Plate hanger */}
-      <Rod a={[-0.8, 0.98, 0]} b={[-0.99, 0.82, 0]} r={0.012} material={m.satinBlack} />
-      <RBox
-        size={[0.008, 0.12, 0.18]}
-        radius={0.003}
-        position={[-1.005, 0.76, 0]}
-        rotation={[0, 0, -0.15]}
+      {/* Plate mount: a tapering "stinger" arm out from under the tail */}
+      <Panel
+        profile={[
+          [-0.74, 0.955],
+          [-0.92, 0.97],
+          [-1.06, 0.965],
+          [-1.1, 0.95],
+          [-1.08, 0.935],
+          [-0.95, 0.935],
+          [-0.8, 0.915],
+        ]}
+        width={0.09}
+        bevel={0.01}
+        material={m.satinBlack}
+        taper={[
+          [-0.74, 1],
+          [-1.1, 0.45],
+        ]}
+      />
+      {/* Holder drops from the arm's tip, raked back */}
+      <Panel
+        profile={[
+          [-1.03, 0.94],
+          [-1.08, 0.94],
+          [-1.07, 0.86],
+          [-1.04, 0.66],
+          [-1.0, 0.62],
+          [-0.99, 0.66],
+          [-1.01, 0.86],
+        ]}
+        width={0.05}
+        bevel={0.008}
         material={m.satinBlack}
       />
+      <RBox
+        size={[0.008, 0.13, 0.19]}
+        radius={0.003}
+        position={[-1.05, 0.74, 0]}
+        rotation={[0, 0, -0.1]}
+        material={m.gloss}
+      />
+      {/* Plate light */}
+      <mesh position={[-1.065, 0.83, 0]} material={m.headlight}>
+        <boxGeometry args={[0.006, 0.006, 0.04]} />
+      </mesh>
     </group>
   );
 }
@@ -799,18 +835,20 @@ function Seat({ m }: { m: Mats }) {
       {/* Pillion pad: raised, following the tail's rake */}
       <Panel
         profile={[
-          [-0.5, 0.975],
-          [-0.58, 0.993],
-          [-0.68, 1.015],
-          [-0.78, 1.04],
-          [-0.835, 1.05],
-          [-0.845, 1.03],
+          [-0.5, 0.99],
+          [-0.54, 1.012],
+          [-0.62, 1.03],
+          [-0.72, 1.052],
+          [-0.8, 1.072],
+          [-0.84, 1.074],
+          [-0.855, 1.05],
+          [-0.84, 1.025],
           [-0.72, 0.99],
           [-0.58, 0.955],
           [-0.51, 0.945],
         ]}
-        width={0.2}
-        bevel={0.024}
+        width={0.21}
+        bevel={0.032}
         material={m.seat}
         taper={PILLION_TAPER}
       />
@@ -969,21 +1007,22 @@ function FrontEnd({ m }: { m: Mats }) {
               r={0.006}
               material={m.alloy}
             />
-            {/* Mirror on a stalk */}
+            {/* Mirror: stalk rises, then kinks outward to a wide, low head */}
             <Sweep
               points={[
                 [x0 - 0.035, 1.09, s * 0.17],
-                [x0 - 0.045, 1.2, s * 0.18],
-                [x0 - 0.05, 1.29, s * 0.2],
+                [x0 - 0.04, 1.15, s * 0.175],
+                [x0 - 0.045, 1.18, s * 0.2],
+                [x0 - 0.05, 1.2, s * 0.26],
               ]}
               r={0.005}
               material={m.satinBlack}
             />
             <RBox
-              size={[0.016, 0.065, 0.095]}
+              size={[0.016, 0.05, 0.105]}
               radius={0.01}
-              position={[x0 - 0.05, 1.305, s * 0.235]}
-              rotation={[s * 0.15, 0, 0]}
+              position={[x0 - 0.052, 1.208, s * 0.3]}
+              rotation={[s * 0.25, 0, 0]}
               material={m.gloss}
             />
           </group>
@@ -1013,11 +1052,12 @@ function FrontEnd({ m }: { m: Mats }) {
       <Panel
         profile={[
           [0.455, 0.965],
-          [0.54, 0.96],
-          [0.6, 0.922],
-          [0.585, 0.86],
-          [0.545, 0.8],
-          [0.48, 0.79],
+          [0.535, 0.96],
+          [0.56, 0.935],
+          [0.598, 0.86],
+          [0.635, 0.795],
+          [0.6, 0.785],
+          [0.5, 0.79],
           [0.44, 0.85],
         ]}
         width={0.19}
@@ -1027,16 +1067,21 @@ function FrontEnd({ m }: { m: Mats }) {
       {/* Brow: a gunmetal blade over the lens */}
       <Panel
         profile={[
-          [0.5, 0.968],
-          [0.6, 0.935],
-          [0.612, 0.92],
-          [0.52, 0.952],
+          [0.49, 0.97],
+          [0.556, 0.948],
+          [0.572, 0.932],
+          [0.51, 0.952],
         ]}
         width={0.2}
         bevel={0.004}
         material={m.gunmetal}
       />
-      <HeadlightLens m={m} />
+      {/* Lens raked to match the face: bottom forward */}
+      <group position={[0.602, 0.865, 0]} rotation={[0, 0, 0.47]}>
+        <group position={[-0.596, -0.88, 0]}>
+          <HeadlightLens m={m} />
+        </group>
+      </group>
       <Pair>
         {(s) => (
           <group key={s}>

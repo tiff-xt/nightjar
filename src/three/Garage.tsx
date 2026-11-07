@@ -29,6 +29,11 @@ const INSPECT: Record<string, { position: [number, number, number]; target: [num
   engine: { position: [0.35, 0.62, 1.35], target: [0.05, 0.55, 0], fov: 34 },
   cockpit: { position: [-0.55, 1.55, 0.9], target: [0.4, 0.98, 0], fov: 34 },
 };
+// Design review: ?paint=<id> previews a finish without scrolling to the configurator.
+if (typeof window !== "undefined") {
+  const paint = new URLSearchParams(location.search).get("paint");
+  if (paint) store.paint = paint;
+}
 const inspectView = () =>
   typeof window === "undefined" ? undefined : INSPECT[new URLSearchParams(location.search).get("view") ?? ""];
 

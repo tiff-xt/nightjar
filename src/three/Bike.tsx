@@ -32,10 +32,10 @@ import {
  * low-slung exhaust. No real brand's design, logos or graphics.
  *
  * Units are metres. x = forward, y = up, z = rider's left.
- * Wheelbase 1.42 m, 17" wheels, 25° rake.
+ * Wheelbase 1.49 m, 17" wheels, 25° rake.
  */
 
-const FRONT: P3 = [0.71, 0.3, 0];
+const FRONT: P3 = [0.78, 0.3, 0];
 const REAR: P3 = [-0.71, 0.315, 0];
 const PIVOT: P3 = [-0.15, 0.5, 0];
 const RAKE = 0.4363; // 25°
@@ -552,8 +552,8 @@ function Exhaust({ m }: { m: Mats }) {
       headers: ([1, -1] as const).map((s) =>
         sweep(
           [
-            [0.29, 0.655, s * 0.07],
-            [0.37, 0.57, s * 0.075],
+            [0.32, 0.68, s * 0.07],
+            [0.4, 0.58, s * 0.075],
             [0.38, 0.42, s * 0.07],
             [0.31, 0.27, s * 0.05],
             [0.14, 0.215, s * 0.03],
@@ -623,9 +623,9 @@ const SHROUD: P2[] = [
   [0.19, 1.035],
   [0.26, 1.0],
   [0.36, 0.91],
-  [0.46, 0.82],
-  [0.5, 0.775],
-  [0.44, 0.76],
+  [0.49, 0.81],
+  [0.545, 0.76],
+  [0.47, 0.75],
   [0.38, 0.7],
   [0.31, 0.69],
   [0.26, 0.77],
@@ -649,13 +649,14 @@ const RAD_SIDE: P2[] = [
 ];
 /** Belly pan under the engine. */
 const BELLY: P2[] = [
-  [0.32, 0.31],
-  [0.24, 0.21],
-  [0.04, 0.17],
-  [-0.12, 0.19],
-  [-0.1, 0.26],
-  [0.1, 0.27],
-  [0.26, 0.34],
+  [0.37, 0.33],
+  [0.33, 0.235],
+  [0.39, 0.185],
+  [0.18, 0.18],
+  [-0.13, 0.19],
+  [-0.15, 0.24],
+  [0.05, 0.255],
+  [0.25, 0.3],
 ];
 const TAIL: P2[] = [
   [-0.42, 0.93],
@@ -696,7 +697,7 @@ const SIDE_COVER: P2[] = [
 function Bodywork({ m }: { m: Mats }) {
   return (
     <group>
-      <Panel profile={TANK} width={0.3} bevel={0.045} material={m.paint} taper={TANK_TAPER} />
+      <Panel profile={TANK} width={0.3} bevel={0.02} material={m.paint} taper={TANK_TAPER} />
       <Disc r={0.034} depth={0.012} position={[0.07, 1.072, 0]} material={m.gunmetal} />
       <mesh position={[0.07, 1.075, 0]} rotation={[0, 0, 0]} material={m.accent}>
         <torusGeometry args={[0.028, 0.002, 6, 32]} />
@@ -706,7 +707,7 @@ function Bodywork({ m }: { m: Mats }) {
           <group key={s}>
             {/* Tank shroud flared outward, with a silver crease line */}
             <group rotation={[0, -s * 0.05, 0]}>
-              <Panel profile={SHROUD} width={0.024} z={s * 0.152} bevel={0.007} material={m.paint} />
+              <Panel profile={SHROUD} width={0.024} z={s * 0.152} bevel={0.0025} material={m.paint} />
               <Panel profile={SHROUD_LINE} width={0.004} z={s * 0.166} bevel={0.001} material={m.accent} />
             </group>
             <Panel profile={RAD_SIDE} width={0.012} z={s * 0.185} bevel={0.003} material={m.satinBlack} />
@@ -719,7 +720,7 @@ function Bodywork({ m }: { m: Mats }) {
                 material={m.engine}
               />
             ))}
-            <Panel profile={SIDE_COVER} width={0.012} z={s * 0.13} bevel={0.003} material={m.paint} />
+            <Panel profile={SIDE_COVER} width={0.012} z={s * 0.13} bevel={0.002} material={m.gloss} />
             <Panel
               profile={TAIL_STRIPE}
               width={0.003}
@@ -729,61 +730,64 @@ function Bodywork({ m }: { m: Mats }) {
               taper={TAIL_TAPER}
             />
             {/* Indicators on the plate hanger */}
-            <mesh position={[-1.02, 0.965, s * 0.07]} rotation={[Math.PI / 2, 0, 0]} material={m.amber}>
+            <mesh position={[-1.03, 0.94, s * 0.06]} rotation={[Math.PI / 2, 0, 0]} material={m.amber}>
               <capsuleGeometry args={[0.009, 0.028, 4, 10]} />
             </mesh>
           </group>
         )}
       </Pair>
-      <Panel profile={TAIL} width={0.2} bevel={0.02} material={m.paint} taper={TAIL_TAPER} />
-      <Panel profile={BELLY} width={0.25} bevel={0.012} material={m.satinBlack} />
+      <Panel profile={TAIL} width={0.2} bevel={0.006} material={m.paint} taper={TAIL_TAPER} />
+      <Panel
+        profile={BELLY}
+        width={0.25}
+        bevel={0.003}
+        material={m.gloss}
+        taper={[
+          [0.39, 0.55],
+          [0.2, 1],
+          [-0.15, 0.9],
+        ]}
+      />
       {/* Tail light: a thin red blade at the tip */}
       <mesh position={[-0.966, 1.064, 0]} rotation={[0, 0, 0.36]} material={m.tail}>
         <boxGeometry args={[0.008, 0.022, 0.06]} />
       </mesh>
-      {/* Plate mount: a tapering "stinger" arm out from under the tail */}
+      {/* Plate mount: a curved stinger arcing back and down from under the tail */}
       <Panel
         profile={[
           [-0.74, 0.955],
-          [-0.92, 0.97],
-          [-1.06, 0.965],
-          [-1.1, 0.95],
-          [-1.08, 0.935],
-          [-0.95, 0.935],
-          [-0.8, 0.915],
+          [-0.9, 0.968],
+          [-1.0, 0.95],
+          [-1.07, 0.905],
+          [-1.105, 0.835],
+          [-1.11, 0.75],
+          [-1.09, 0.665],
+          [-1.07, 0.655],
+          [-1.075, 0.75],
+          [-1.07, 0.83],
+          [-1.035, 0.89],
+          [-0.97, 0.925],
+          [-0.86, 0.935],
+          [-0.77, 0.925],
         ]}
-        width={0.09}
-        bevel={0.01}
+        width={0.085}
+        bevel={0.004}
         material={m.satinBlack}
         taper={[
           [-0.74, 1],
-          [-1.1, 0.45],
+          [-1.0, 0.75],
+          [-1.11, 0.6],
         ]}
-      />
-      {/* Holder drops from the arm's tip, raked back */}
-      <Panel
-        profile={[
-          [-1.03, 0.94],
-          [-1.08, 0.94],
-          [-1.07, 0.86],
-          [-1.04, 0.66],
-          [-1.0, 0.62],
-          [-0.99, 0.66],
-          [-1.01, 0.86],
-        ]}
-        width={0.05}
-        bevel={0.008}
-        material={m.satinBlack}
       />
       <RBox
         size={[0.008, 0.13, 0.19]}
         radius={0.003}
-        position={[-1.05, 0.74, 0]}
-        rotation={[0, 0, -0.1]}
+        position={[-1.098, 0.745, 0]}
+        rotation={[0, 0, 0.05]}
         material={m.gloss}
       />
       {/* Plate light */}
-      <mesh position={[-1.065, 0.83, 0]} material={m.headlight}>
+      <mesh position={[-1.09, 0.83, 0]} material={m.headlight}>
         <boxGeometry args={[0.006, 0.006, 0.04]} />
       </mesh>
     </group>
@@ -1048,53 +1052,56 @@ function FrontEnd({ m }: { m: Mats }) {
           <planeGeometry args={[0.04, 0.004]} />
         </mesh>
       </group>
-      {/* Angular headlight: a sharp cowl with a brow over a faceted lens */}
-      <Panel
-        profile={[
-          [0.455, 0.965],
-          [0.535, 0.96],
-          [0.56, 0.935],
-          [0.598, 0.86],
-          [0.635, 0.795],
-          [0.6, 0.785],
-          [0.5, 0.79],
-          [0.44, 0.85],
-        ]}
-        width={0.19}
-        bevel={0.014}
-        material={m.paint}
-      />
-      {/* Brow: a gunmetal blade over the lens */}
-      <Panel
-        profile={[
-          [0.49, 0.97],
-          [0.556, 0.948],
-          [0.572, 0.932],
-          [0.51, 0.952],
-        ]}
-        width={0.2}
-        bevel={0.004}
-        material={m.gunmetal}
-      />
-      {/* Lens raked to match the face: bottom forward */}
-      <group position={[0.602, 0.865, 0]} rotation={[0, 0, 0.47]}>
-        <group position={[-0.596, -0.88, 0]}>
-          <HeadlightLens m={m} />
-        </group>
-      </group>
-      <Pair>
-        {(s) => (
-          <group key={s}>
-            {/* Turn signals on the fork, just below the cowl */}
-            <mesh position={[0.52, 0.86, s * 0.125]} rotation={[0, 0, Math.PI / 2]} material={m.amber}>
-              <capsuleGeometry args={[0.008, 0.024, 4, 10]} />
-            </mesh>
+      {/* Headlight assembly rides forward with the longer front end */}
+      <group position={[0.06, 0, 0]}>
+        {/* Angular headlight: a sharp cowl with a brow over a faceted lens */}
+        <Panel
+          profile={[
+            [0.455, 0.965],
+            [0.535, 0.96],
+            [0.56, 0.935],
+            [0.598, 0.86],
+            [0.635, 0.795],
+            [0.6, 0.785],
+            [0.5, 0.79],
+            [0.44, 0.85],
+          ]}
+          width={0.19}
+          bevel={0.005}
+          material={m.paint}
+        />
+        {/* Brow: a gunmetal blade over the lens */}
+        <Panel
+          profile={[
+            [0.49, 0.97],
+            [0.556, 0.948],
+            [0.572, 0.932],
+            [0.51, 0.952],
+          ]}
+          width={0.2}
+          bevel={0.004}
+          material={m.gunmetal}
+        />
+        {/* Lens raked to match the face: bottom forward */}
+        <group position={[0.602, 0.865, 0]} rotation={[0, 0, 0.47]}>
+          <group position={[-0.596, -0.88, 0]}>
+            <HeadlightLens m={m} />
           </group>
-        )}
-      </Pair>
+        </group>
+        <Pair>
+          {(s) => (
+            <group key={s}>
+              {/* Turn signals on the fork, just below the cowl */}
+              <mesh position={[0.52, 0.86, s * 0.125]} rotation={[0, 0, Math.PI / 2]} material={m.amber}>
+                <capsuleGeometry args={[0.008, 0.024, 4, 10]} />
+              </mesh>
+            </group>
+          )}
+        </Pair>
+      </group>
       {/* Short front fender with a silver pinstripe */}
       <group position={FRONT}>
-        <mesh geometry={geo.fender} material={m.paint} castShadow />
+        <mesh geometry={geo.fender} material={m.gloss} castShadow />
         <mesh geometry={geo.fenderStripe} material={m.accent} />
       </group>
     </group>
@@ -1203,7 +1210,7 @@ function Beam() {
   });
   // Cone apex at the headlight, opening forward along +x.
   return (
-    <mesh position={[0.6 + 1.6, 0.6, 0]} rotation={[0, 0, Math.PI / 2 + 0.12]} material={beamMaterial}>
+    <mesh position={[0.66 + 1.6, 0.6, 0]} rotation={[0, 0, Math.PI / 2 + 0.12]} material={beamMaterial}>
       <coneGeometry args={[0.85, 3.2, 48, 1, true]} />
     </mesh>
   );
@@ -1239,7 +1246,9 @@ export function Bike() {
         <Frame m={m} />
       </Assembly>
       <Assembly name="engine">
-        <Engine m={m} />
+        <group position={[-0.012, -0.075, 0]} scale={1.15}>
+          <Engine m={m} />
+        </group>
       </Assembly>
       <Assembly name="exhaust">
         <Exhaust m={m} />

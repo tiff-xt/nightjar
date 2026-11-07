@@ -39,6 +39,15 @@ export const PAINTS: Finish[] = [
     swatch: "linear-gradient(160deg,#ff6a5c,#a3141a 50%,#3b0606)",
   },
   {
+    id: "pearl",
+    name: "Pearl White",
+    color: "#e8e8e4",
+    metalness: 0.25,
+    roughness: 0.22,
+    clearcoat: 1,
+    swatch: "linear-gradient(160deg,#ffffff,#dcdcd8 55%,#0d0e11 56%,#1a1b1f)",
+  },
+  {
     id: "liquid-silver",
     name: "Liquid Silver",
     color: "#e6e9ef",

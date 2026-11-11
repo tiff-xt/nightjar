@@ -73,18 +73,23 @@ export function panel(profile: P2[], width: number, z = 0, bevel = 0.012) {
  * Tyre: a lathe of a rounded, superelliptic cross-section, turned to spin
  * around Z. `rim` is the bead radius, `outer` the tread radius.
  */
-export function tyre(rim: number, outer: number, width: number, segments = 72) {
+export function tyre(rim: number, outer: number, width: number, bead = width * 0.8, segments = 72) {
   const h = outer - rim;
   const pts: THREE.Vector2[] = [];
   const n = 2.6; // squareness of the profile: rounder crown on sport tyres
-  for (let i = 0; i <= 28; i++) {
-    const th = (i / 28) * Math.PI;
+  const smooth = (t: number) => t * t * (3 - 2 * t);
+  for (let i = 0; i <= 32; i++) {
+    const th = (i / 32) * Math.PI;
     const c = Math.cos(th);
     const s = Math.sin(th);
-    const x = (width / 2) * Math.sign(c) * Math.pow(Math.abs(c), 2 / n);
     const r = rim + h * Math.pow(s, 2 / n);
+    // Sidewalls bulge to full width, then tuck in to the bead seated on the rim flange.
+    const tuck = bead / width + (1 - bead / width) * smooth(Math.min(1, s / 0.45));
+    const x = (width / 2) * Math.sign(c) * Math.pow(Math.abs(c), 2 / n) * tuck;
     pts.push(new THREE.Vector2(r, x));
   }
+  // Close the section along the bead seat so the tyre is a solid ring, not an open shell.
+  pts.push(pts[0].clone());
   const geo = new THREE.LatheGeometry(pts, segments);
   geo.rotateX(Math.PI / 2);
   return geo;

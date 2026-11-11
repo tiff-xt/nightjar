@@ -41,6 +41,7 @@ const INSPECT: Record<string, { position: [number, number, number]; target: [num
   side: { position: [0, 0.68, 4.2], target: [0, 0.66, 0], fov: 30 },
   front: { position: [3.2, 0.9, 0], target: [0, 0.75, 0], fov: 22 },
   front34: { position: [2.4, 1.15, 2.4], target: [0, 0.66, 0], fov: 30 },
+  wheels: { position: [-1.5, 0.5, 1.9], target: [-0.1, 0.35, 0], fov: 34 },
   rear34: { position: [-2.4, 1.2, 2.2], target: [0, 0.66, 0], fov: 30 },
   engine: { position: [0.35, 0.62, 1.35], target: [0.05, 0.55, 0], fov: 34 },
   cockpit: { position: [-0.55, 1.55, 0.9], target: [0.4, 0.98, 0], fov: 34 },
@@ -214,15 +215,15 @@ function getBlobTexture() {
 function GroundShadow() {
   const blobs: { x: number; sx: number; sz: number; o: number }[] = [
     { x: 0, sx: 2.1, sz: 0.7, o: 0.7 },
-    { x: 0.78, sx: 0.42, sz: 0.2, o: 0.85 },
-    { x: -0.71, sx: 0.5, sz: 0.26, o: 0.85 },
+    { x: 0.78, sx: 0.55, sz: 0.22, o: 0.45 },
+    { x: -0.71, sx: 0.65, sz: 0.3, o: 0.45 },
   ];
   return (
     <>
       {blobs.map((b, i) => (
         <mesh
           key={i}
-          position={[b.x, 0.003 + i * 0.0005, 0]}
+          position={[b.x, -0.006 + i * 0.0005, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
           renderOrder={TRANSPARENT_ORDER.ground}
         >
@@ -243,7 +244,9 @@ function GroundShadow() {
  */
 function Floor() {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]}>
+    // A few mm below y=0: the tyres' lowest points sit exactly at 0, and a floor
+    // there slices through the tread, showing as a dark oval on each tyre.
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.008, 0]}>
       <planeGeometry args={[30, 30]} />
       {/* Matte sealed concrete: a broad, soft sheen from the environment map,
           no hotspots that would flash as the camera moves. (A MeshReflectorMaterial re-rendered the scene into

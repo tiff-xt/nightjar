@@ -78,6 +78,7 @@ function createMaterials() {
     accent: physical({ color: "#b3b8c1", metalness: 1, roughness: 0.2 }),
     red: physical({ color: RED, metalness: 0.5, roughness: 0.3, clearcoat: 0.8 }),
     gloss: physical({ color: "#0d0e11", metalness: 0.3, roughness: 0.22, clearcoat: 1 }),
+    rimBarrel: physical({ color: "#0d0e11", metalness: 0.3, roughness: 0.3, side: THREE.DoubleSide }),
     satinBlack: physical({ color: "#141519", metalness: 0.45, roughness: 0.55 }),
     rubber: physical({ color: "#0b0b0c", metalness: 0, roughness: 0.9 }),
     tyreWall: physical({ color: "#111113", metalness: 0, roughness: 0.75 }),
@@ -202,26 +203,27 @@ function Wheel({ at, front, m }: { at: P3; front?: boolean; m: Mats }) {
   const rimW = width * 0.8;
   const geo = useMemo(
     () => ({
-      tyre: tyre(0.218, outer, width),
-      spoke: ySpoke(0.05, 0.208, 0.024),
+      tyre: tyre(0.214, outer, width, rimW),
+      spoke: ySpoke(0.05, 0.208, 0.042),
       rotor: front ? rotor(0.148, 0.074) : rotor(0.11, 0.056, 16),
       carrier: arcBand(0.05, 0.08, 0, Math.PI * 2, 0.006, 0.001),
       sprocket: sprocket(0.105, 42),
     }),
-    [front, outer, width],
+    [front, outer, width, rimW],
   );
   return (
     <group position={at}>
       <mesh geometry={geo.tyre} material={m.rubber} castShadow receiveShadow />
       {/* Rim barrel, lips and a red pinstripe on each lip */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} material={m.gloss}>
-        <cylinderGeometry args={[0.212, 0.212, rimW, 64, 1, true]} />
+      <mesh rotation={[Math.PI / 2, 0, 0]} material={m.rimBarrel}>
+        <cylinderGeometry args={[0.21, 0.21, rimW, 64, 1, true]} />
       </mesh>
       <Pair>
         {(s) => (
           <group key={s} position={[0, 0, (s * rimW) / 2]}>
+            {/* Flange: overlaps the tyre bead so the joint reads as seated */}
             <mesh material={m.gloss}>
-              <torusGeometry args={[0.217, 0.0065, 10, 72]} />
+              <torusGeometry args={[0.216, 0.0085, 12, 72]} />
             </mesh>
             <mesh position={[0, 0, s * 0.004]} material={m.accent}>
               <torusGeometry args={[0.2085, 0.0017, 6, 72]} />

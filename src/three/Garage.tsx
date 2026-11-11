@@ -210,6 +210,11 @@ function Reflections() {
 
 export default function Garage() {
   const [dpr, setDpr] = useState(1.5);
+  const [tuning, setTuning] = useState(true);
+  useEffect(() => {
+    const t = window.setTimeout(() => setTuning(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <Canvas
       // PCF: three r18x removed PCFSoftShadowMap (R3F's default for `shadows`) and warns on fallback.
@@ -225,7 +230,22 @@ export default function Garage() {
       onCreated={({ gl }) => gl.setClearColor("#040405")}
       aria-hidden
     >
-      <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(Math.min(2, window.devicePixelRatio))} />
+      {/*
+        Pick the resolution once, during the intro (the garage light is still
+        flickering on, so a resize is invisible), then lock it. Changing dpr
+        later resizes the canvas and rebuilds the post-processing and
+        reflection buffers, which shows as a black flash mid-interaction.
+      */}
+      {tuning && (
+        <PerformanceMonitor
+          ms={250}
+          iterations={6}
+          flipflops={1}
+          onDecline={() => setDpr(1)}
+          onIncline={() => setDpr(Math.min(2, window.devicePixelRatio))}
+          onFallback={() => setDpr(1)}
+        />
+      )}
       <fog attach="fog" args={["#040405", 5, 14]} />
       <CameraRig />
       <KeyLight />

@@ -208,6 +208,12 @@ function Reflections() {
   );
 }
 
+/*
+ * WebGL context loss (GPU memory pressure, driver reset) is handled by
+ * three.js itself: WebGLRenderer prevents the default on "webglcontextlost"
+ * and re-initialises programs, textures and targets on "webglcontextrestored",
+ * so the scene comes back without remounting anything.
+ */
 export default function Garage() {
   const [dpr, setDpr] = useState(1.5);
   const [tuning, setTuning] = useState(true);

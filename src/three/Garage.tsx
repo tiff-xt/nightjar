@@ -17,6 +17,8 @@ import { store } from "@/lib/store";
 import { nightAt, shotAt, window01 } from "@/lib/story";
 import { Bike } from "./Bike";
 import { Callouts } from "./Callouts";
+import { debugFlags } from "@/lib/debugFlags";
+import { useDebugFlags } from "@/components/useDebugFlags";
 import { installSafeShading } from "./safeShading";
 
 installSafeShading();
@@ -60,7 +62,7 @@ function CameraRig() {
     const cam = camera as THREE.PerspectiveCamera;
     const k = first.current || reduceMotion() ? 1 : 1 - Math.exp(-dt * 3.2);
     first.current = false;
-    const par = reduceMotion() ? 0 : 0.08;
+    const par = reduceMotion() || !debugFlags.on("motion") ? 0 : 0.08;
     cam.position.lerp(
       new THREE.Vector3(shot.position[0] + pointer.x * par, shot.position[1] + pointer.y * par * 0.6, shot.position[2]),
       k,
@@ -83,7 +85,7 @@ function Turntable({ children }: { children: React.ReactNode }) {
     const g = ref.current;
     if (!g) return;
     const build = window01(store.progress, 5, 5.3, 0.4);
-    if (build > 0.5 && !reduceMotion()) store.spin += dt * 0.12;
+    if (build > 0.5 && !reduceMotion() && debugFlags.on("motion")) store.spin += dt * 0.12;
     const target = store.spin * build;
     g.rotation.y += (target - g.rotation.y) * Math.min(1, dt * 4);
   });
@@ -92,6 +94,7 @@ function Turntable({ children }: { children: React.ReactNode }) {
 
 /** Key light: a hard overhead spot that flickers on like a garage tube, then dims for night mode. */
 function KeyLight() {
+  const hazeOn = useDebugFlags()("haze");
   const spot = useRef<THREE.SpotLight>(null);
   const rimL = useRef<THREE.SpotLight>(null);
   const rimR = useRef<THREE.SpotLight>(null);
@@ -139,6 +142,7 @@ function KeyLight() {
     <>
       <SpotLight
         ref={spot}
+        volumetric={hazeOn}
         position={[0.2, 4.6, 0.6]}
         angle={0.42}
         penumbra={0.55}
@@ -168,6 +172,20 @@ function KeyLight() {
       <ambientLight intensity={0.03} />
     </>
   );
+}
+
+/** Debug: turn the shadow map on/off live. */
+function ShadowSwitch({ on }: { on: boolean }) {
+  const get = useThree((st) => st.get);
+  useEffect(() => {
+    const { gl, scene } = get();
+    gl.shadowMap.enabled = on;
+    scene.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+      (Array.isArray(m) ? m : m ? [m] : []).forEach((x) => (x.needsUpdate = true));
+    });
+  }, [on, get]);
+  return null;
 }
 
 /** Soft radial falloff, generated once. */
@@ -286,6 +304,7 @@ function Reflections() {
  * so the scene comes back without remounting anything.
  */
 export default function Garage() {
+  const on = useDebugFlags();
   return (
     <Canvas
       // PCF: three r18x removed PCFSoftShadowMap (R3F's default for `shadows`) and warns on fallback.
@@ -307,31 +326,43 @@ export default function Garage() {
       aria-hidden
     >
       <fog attach="fog" args={["#040405", 5, 14]} />
+      <ShadowSwitch on={on("shadows")} />
       <CameraRig />
       <KeyLight />
       <Reflections />
       <Turntable>
         <Bike />
-        <GroundShadow />
+        {on("ground") && <GroundShadow />}
         <Callouts />
       </Turntable>
-      <Floor />
+      {on("floor") && <Floor />}
       {/* No MSAA render targets: multisampled float buffers flash black or
           draw partially on some GPU/driver combinations. SMAA instead. */}
-      <EffectComposer multisampling={0}>
-        <Bloom mipmapBlur intensity={0.6} luminanceThreshold={0.92} luminanceSmoothing={0.15} />
-        <ChromaticAberration
-          offset={[0.0006, 0.0004]}
-          radialModulation
-          modulationOffset={0.35}
-          blendFunction={BlendFunction.NORMAL}
-        />
-        <Noise opacity={0.045} blendFunction={BlendFunction.SOFT_LIGHT} />
-        <Vignette offset={0.25} darkness={0.85} />
-        {/* The composer renders in HDR; tone-map last so hot speculars roll off instead of clipping. */}
-        <SMAA />
-        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-      </EffectComposer>
+      {on("post") && (
+        <EffectComposer multisampling={0}>
+          {/* Children must be elements, so disabled effects become empty fragments. */}
+          {on("bloom") ? (
+            <Bloom mipmapBlur intensity={0.6} luminanceThreshold={0.92} luminanceSmoothing={0.15} />
+          ) : (
+            <></>
+          )}
+          {on("chroma") ? (
+            <ChromaticAberration
+              offset={[0.0006, 0.0004]}
+              radialModulation
+              modulationOffset={0.35}
+              blendFunction={BlendFunction.NORMAL}
+            />
+          ) : (
+            <></>
+          )}
+          {on("grain") ? <Noise opacity={0.045} blendFunction={BlendFunction.SOFT_LIGHT} /> : <></>}
+          {on("vignette") ? <Vignette offset={0.25} darkness={0.85} /> : <></>}
+          {on("smaa") ? <SMAA /> : <></>}
+          {/* The composer renders in HDR; tone-map last so hot speculars roll off instead of clipping. */}
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }

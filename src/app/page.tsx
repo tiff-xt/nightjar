@@ -1,5 +1,6 @@
 import { Configurator } from "@/components/Configurator";
 import { EngineControl } from "@/components/EngineControl";
+import { DebugPanel } from "@/components/DebugPanel";
 import { ScrollDriver } from "@/components/ScrollDriver";
 import { Stage } from "@/components/Stage";
 
@@ -153,6 +154,7 @@ export default function Home() {
       </main>
 
       <EngineControl />
+      <DebugPanel />
     </>
   );
 }

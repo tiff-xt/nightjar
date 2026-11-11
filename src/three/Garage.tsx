@@ -293,6 +293,9 @@ export default function Garage() {
       // Fixed resolution: never resized after mount (resizes rebuild every
       // render target and were one source of black frames).
       dpr={[1, 1.5]}
+      // The canvas is fixed: re-measuring on every scroll event is wasted work
+      // and a source of needless state updates mid-scroll.
+      resize={{ scroll: false, debounce: { scroll: 0, resize: 150 } }}
       camera={{ position: [3.1, 1.05, 2.9], fov: 32, near: 0.05, far: 60 }}
       gl={{
         antialias: false,

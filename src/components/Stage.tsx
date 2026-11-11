@@ -13,7 +13,12 @@ export function Stage() {
   }, []);
   return (
     <>
-      <div className="fixed inset-0 -z-10">
+      {/*
+        Sized to the *largest* viewport (100lvh), not the current one, so the
+        mobile address bar showing/hiding while scrolling never resizes the
+        canvas (a resize rebuilds every render target and flashes black).
+      */}
+      <div className="fixed inset-x-0 top-0 -z-10 h-lvh">
         <Garage />
       </div>
       <div aria-hidden className="veil" />

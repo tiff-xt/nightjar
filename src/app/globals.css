@@ -21,9 +21,13 @@
 html {
   background: var(--ink);
   color: var(--text);
+  /* No rubber-band bounce at the top/bottom of the page: in Safari the bounce
+     drags the fixed 3D canvas with it, exposing a dark bar along the edge. */
+  overscroll-behavior: none;
 }
 body {
   font-family: var(--font-sans);
+  overscroll-behavior: none;
 }
 ::selection {
   background: var(--ember);

@@ -1,13 +1,6 @@
 "use client";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import {
-  ContactShadows,
-  Environment,
-  Lightformer,
-  MeshReflectorMaterial,
-  PerformanceMonitor,
-  SpotLight,
-} from "@react-three/drei";
+import { Environment, Lightformer, MeshReflectorMaterial, PerformanceMonitor, SpotLight } from "@react-three/drei";
 import { Bloom, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { BlendFunction, ToneMappingMode } from "postprocessing";
 import { useEffect, useRef, useState } from "react";
@@ -16,6 +9,19 @@ import { store } from "@/lib/store";
 import { nightAt, shotAt, window01 } from "@/lib/story";
 import { Bike } from "./Bike";
 import { Callouts } from "./Callouts";
+import { installSafeShading } from "./safeShading";
+
+installSafeShading();
+
+/**
+ * Transparent layers are normally sorted by distance from the camera to each
+ * object's origin. The haze cone's origin is up at the lamp and the shadow
+ * plane's is on the floor, so as the scroll camera moves (plus pointer
+ * parallax) their order flipped back and forth, and the shadow plane
+ * intermittently covered the haze: a dark band flickering across the scene.
+ * A fixed order keeps it stable: ground shadow, then haze, then the beam.
+ */
+export const TRANSPARENT_ORDER = { ground: -1, haze: 1, beam: 2 } as const;
 
 const reduceMotion = () => typeof window !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -85,6 +91,17 @@ function KeyLight() {
   const born = useRef<number | null>(null);
   const { scene } = useThree();
 
+  // drei's volumetric cone is a child mesh we can't pass props to: pin its order here.
+  useEffect(() => {
+    spot.current?.parent?.traverse((o) => {
+      const mat = (o as THREE.Mesh).material as THREE.ShaderMaterial | undefined;
+      // drei's SpotLightMaterial: identified by its uniforms.
+      if ((o as THREE.Mesh).isMesh && mat?.uniforms?.anglePower && mat.uniforms.spotPosition) {
+        o.renderOrder = TRANSPARENT_ORDER.haze;
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (head.current) {
       head.current.target.position.set(4, 0, 0);
@@ -123,7 +140,8 @@ function KeyLight() {
         opacity={0.16}
         color="#f4f1ea"
         castShadow
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={[2048, 2048]}
+        shadow-normalBias={0.02}
         shadow-bias={-0.0004}
       />
       {/* Cool rim from behind-left, warm ember kicker from behind-right. */}
@@ -144,9 +162,62 @@ function KeyLight() {
   );
 }
 
+/** Soft radial falloff, generated once. */
+let blobTexture: THREE.Texture | null = null;
+function getBlobTexture() {
+  if (blobTexture) return blobTexture;
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, "rgba(0,0,0,1)");
+  g.addColorStop(0.45, "rgba(0,0,0,0.65)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  blobTexture = new THREE.CanvasTexture(c);
+  return blobTexture;
+}
+
+/**
+ * Grounding shadow: soft blobs under the bike and each tyre's contact patch,
+ * parented to the turntable so they rotate with it. Replaces ContactShadows,
+ * whose per-frame orthographic re-render produced a large, aliased pattern
+ * that crawled with every camera and turntable move (dark bands sweeping).
+ */
+function GroundShadow() {
+  const blobs: { x: number; sx: number; sz: number; o: number }[] = [
+    { x: 0, sx: 2.1, sz: 0.7, o: 0.7 },
+    { x: 0.78, sx: 0.42, sz: 0.2, o: 0.85 },
+    { x: -0.71, sx: 0.5, sz: 0.26, o: 0.85 },
+  ];
+  return (
+    <>
+      {blobs.map((b, i) => (
+        <mesh
+          key={i}
+          position={[b.x, 0.003 + i * 0.0005, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          renderOrder={TRANSPARENT_ORDER.ground}
+        >
+          <planeGeometry args={[b.sx, b.sz]} />
+          <meshBasicMaterial map={getBlobTexture()} transparent opacity={b.o} depthWrite={false} toneMapped={false} />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
+/*
+ * The floor deliberately does not receive the key light's shadow map. Projected
+ * from 4.6 m up across a wide cone, that shadow was blocky and stair-stepped,
+ * and it crawled with every camera move and turntable step: dark bands
+ * sweeping across the lower screen. GroundShadow grounds the bike instead,
+ * softly and stably. The bike still shadows itself.
+ */
 function Floor() {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[30, 30]} />
       <MeshReflectorMaterial
         resolution={512}
@@ -258,17 +329,9 @@ export default function Garage() {
       <Reflections />
       <Turntable>
         <Bike />
+        <GroundShadow />
         <Callouts />
       </Turntable>
-      <ContactShadows
-        position={[0, 0.002, 0]}
-        opacity={0.85}
-        scale={4}
-        blur={2.4}
-        far={1.2}
-        resolution={512}
-        color="#000"
-      />
       <Floor />
       <EffectComposer multisampling={4}>
         <Bloom mipmapBlur intensity={0.6} luminanceThreshold={0.92} luminanceSmoothing={0.15} />

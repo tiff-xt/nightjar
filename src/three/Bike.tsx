@@ -86,7 +86,8 @@ function createMaterials() {
     stanchion: physical({ color: "#b8bcc4", metalness: 1, roughness: 0.1 }),
     brushed: physical({ color: "#d3d6dc", metalness: 0.8, roughness: 0.42 }),
     steel: physical({ color: "#a9aeb7", metalness: 1, roughness: 0.22 }),
-    exhaust: physical({ color: "#55524f", metalness: 1, roughness: 0.3, iridescence: 0.5, iridescenceIOR: 1.7 }),
+    // Heat-tinted steel via colour, not iridescence (which can emit NaN pixels on some GPUs).
+    exhaust: physical({ color: "#5e5650", metalness: 1, roughness: 0.3 }),
     carbon: physical({ color: "#17181b", metalness: 0.4, roughness: 0.3, clearcoat: 1 }),
     seat: physical({
       color: "#131315",
@@ -1210,7 +1211,7 @@ function Beam() {
   });
   // Cone apex at the headlight, opening forward along +x.
   return (
-    <mesh position={[0.66 + 1.6, 0.6, 0]} rotation={[0, 0, Math.PI / 2 + 0.12]} material={beamMaterial}>
+    <mesh position={[0.66 + 1.6, 0.6, 0]} rotation={[0, 0, Math.PI / 2 + 0.12]} material={beamMaterial} renderOrder={2}>
       <coneGeometry args={[0.85, 3.2, 48, 1, true]} />
     </mesh>
   );

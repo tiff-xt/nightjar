@@ -223,8 +223,29 @@ function Wheel({ at, front, m }: { at: P3; front?: boolean; m: Mats }) {
     }),
     [front, outer, width, rimW],
   );
+  const group = useRef<THREE.Group>(null);
+  const flanges = useRef<(THREE.Mesh | null)[]>([null, null]);
+  const stripes = useRef<(THREE.Mesh | null)[]>([null, null]);
+  const local = useMemo(() => new THREE.Vector3(), []);
+  // Looking through the spokes you would otherwise see the far side's polished
+  // flange as a second bright ring. Each frame, keep the near side polished
+  // and turn the far side's flange to dull metal (and hide its pinstripe), so
+  // it recedes into the wheel's interior like it does on a real wheel.
+  useFrame(({ camera }) => {
+    const g = group.current;
+    if (!g) return;
+    local.copy(camera.position);
+    g.worldToLocal(local);
+    const near = local.z >= 0 ? 0 : 1; // index 0 is the +z side
+    for (const i of [0, 1]) {
+      const f = flanges.current[i];
+      const st = stripes.current[i];
+      if (f) f.material = i === near ? m.gloss : m.rimBarrel;
+      if (st) st.visible = i === near;
+    }
+  });
   return (
-    <group position={at}>
+    <group ref={group} position={at}>
       <mesh geometry={geo.tyre} material={m.rubber} castShadow receiveShadow />
       {/* Tread grooves on the crown and a moulded band on each sidewall: what
           makes it read as rubber rather than another gloss-black ring. */}
@@ -244,14 +265,26 @@ function Wheel({ at, front, m }: { at: P3; front?: boolean; m: Mats }) {
       <mesh rotation={[Math.PI / 2, 0, 0]} material={m.rimBarrel}>
         <cylinderGeometry args={[0.21, 0.21, rimW, 64, 1, true]} />
       </mesh>
+      {/* Flanges: only the one facing the camera is polished; see useNearSide. */}
       <Pair>
         {(s) => (
           <group key={s} position={[0, 0, (s * rimW) / 2]}>
-            {/* Flange: overlaps the tyre bead so the joint reads as seated */}
-            <mesh material={m.gloss}>
+            {/* Overlaps the tyre bead so the joint reads as seated */}
+            <mesh
+              ref={(el) => {
+                flanges.current[s > 0 ? 0 : 1] = el;
+              }}
+              material={m.gloss}
+            >
               <torusGeometry args={[0.216, 0.0085, 12, 72]} />
             </mesh>
-            <mesh position={[0, 0, s * 0.004]} material={m.accent}>
+            <mesh
+              ref={(el) => {
+                stripes.current[s > 0 ? 0 : 1] = el;
+              }}
+              position={[0, 0, s * 0.004]}
+              material={m.accent}
+            >
               <torusGeometry args={[0.2085, 0.0017, 6, 72]} />
             </mesh>
           </group>

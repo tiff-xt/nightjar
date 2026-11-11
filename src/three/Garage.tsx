@@ -1,9 +1,17 @@
 "use client";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, MeshReflectorMaterial, PerformanceMonitor, SpotLight } from "@react-three/drei";
-import { Bloom, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
+import { Environment, Lightformer, SpotLight } from "@react-three/drei";
+import {
+  Bloom,
+  ChromaticAberration,
+  EffectComposer,
+  Noise,
+  SMAA,
+  ToneMapping,
+  Vignette,
+} from "@react-three/postprocessing";
 import { BlendFunction, ToneMappingMode } from "postprocessing";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { store } from "@/lib/store";
 import { nightAt, shotAt, window01 } from "@/lib/story";
@@ -219,19 +227,11 @@ function Floor() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[30, 30]} />
-      <MeshReflectorMaterial
-        resolution={512}
-        blur={[400, 120]}
-        mixBlur={1}
-        mixStrength={1.4}
-        mirror={0.5}
-        roughness={0.9}
-        depthScale={1}
-        minDepthThreshold={0.6}
-        maxDepthThreshold={1.3}
-        color="#070708"
-        metalness={0.4}
-      />
+      {/* Matte sealed concrete: a broad, soft sheen from the environment map,
+          no hotspots that would flash as the camera moves. (A MeshReflectorMaterial re-rendered the scene into
+          its own target every frame; under post-processing on some GPUs that
+          left frames partially drawn.) */}
+      <meshPhysicalMaterial color="#08080a" roughness={0.85} metalness={0} clearcoat={0.25} clearcoatRoughness={0.6} />
     </mesh>
   );
 }
@@ -286,17 +286,13 @@ function Reflections() {
  * so the scene comes back without remounting anything.
  */
 export default function Garage() {
-  const [dpr, setDpr] = useState(1.5);
-  const [tuning, setTuning] = useState(true);
-  useEffect(() => {
-    const t = window.setTimeout(() => setTuning(false), 3000);
-    return () => clearTimeout(t);
-  }, []);
   return (
     <Canvas
       // PCF: three r18x removed PCFSoftShadowMap (R3F's default for `shadows`) and warns on fallback.
       shadows="percentage"
-      dpr={dpr}
+      // Fixed resolution: never resized after mount (resizes rebuild every
+      // render target and were one source of black frames).
+      dpr={[1, 1.5]}
       camera={{ position: [3.1, 1.05, 2.9], fov: 32, near: 0.05, far: 60 }}
       gl={{
         antialias: false,
@@ -307,22 +303,6 @@ export default function Garage() {
       onCreated={({ gl }) => gl.setClearColor("#040405")}
       aria-hidden
     >
-      {/*
-        Pick the resolution once, during the intro (the garage light is still
-        flickering on, so a resize is invisible), then lock it. Changing dpr
-        later resizes the canvas and rebuilds the post-processing and
-        reflection buffers, which shows as a black flash mid-interaction.
-      */}
-      {tuning && (
-        <PerformanceMonitor
-          ms={250}
-          iterations={6}
-          flipflops={1}
-          onDecline={() => setDpr(1)}
-          onIncline={() => setDpr(Math.min(2, window.devicePixelRatio))}
-          onFallback={() => setDpr(1)}
-        />
-      )}
       <fog attach="fog" args={["#040405", 5, 14]} />
       <CameraRig />
       <KeyLight />
@@ -333,7 +313,9 @@ export default function Garage() {
         <Callouts />
       </Turntable>
       <Floor />
-      <EffectComposer multisampling={4}>
+      {/* No MSAA render targets: multisampled float buffers flash black or
+          draw partially on some GPU/driver combinations. SMAA instead. */}
+      <EffectComposer multisampling={0}>
         <Bloom mipmapBlur intensity={0.6} luminanceThreshold={0.92} luminanceSmoothing={0.15} />
         <ChromaticAberration
           offset={[0.0006, 0.0004]}
@@ -344,6 +326,7 @@ export default function Garage() {
         <Noise opacity={0.045} blendFunction={BlendFunction.SOFT_LIGHT} />
         <Vignette offset={0.25} darkness={0.85} />
         {/* The composer renders in HDR; tone-map last so hot speculars roll off instead of clipping. */}
+        <SMAA />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       </EffectComposer>
     </Canvas>

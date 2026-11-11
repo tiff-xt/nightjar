@@ -90,6 +90,10 @@ export function tyre(rim: number, outer: number, width: number, bead = width * 0
   }
   // Close the section along the bead seat so the tyre is a solid ring, not an open shell.
   pts.push(pts[0].clone());
+  // LatheGeometry's winding follows the profile's direction. Traversed this
+  // way the faces pointed inward, so the outside of the tyre was back-face
+  // culled and you saw the inside of its far half (and the rim) through it.
+  pts.reverse();
   const geo = new THREE.LatheGeometry(pts, segments);
   geo.rotateX(Math.PI / 2);
   return geo;
@@ -190,6 +194,63 @@ export function ySpoke(hub: number, rim: number, thickness = 0.022) {
     bevelSize: 0.003,
     bevelSegments: 2,
     curveSegments: 12,
+  });
+  geo.translate(0, 0, -thickness / 2);
+  return geo;
+}
+
+/**
+ * A swept blade spoke with a hooked talon branching off its trailing edge:
+ * the curved "claw" style of custom cast wheels. Built in the wheel plane
+ * (x/y) around the origin and extruded along z. `scale` narrows the outline
+ * (used for the machined face inlay that sits on each side of the blade).
+ */
+export function sweptSpoke(hub: number, rim: number, thickness = 0.03, scale = 1, sweep = 0.95) {
+  const span = rim - hub;
+  const at = (r: number, th: number) => new THREE.Vector2(r * Math.cos(th), r * Math.sin(th));
+  const centre = (t: number) => sweep * Math.pow(t, 1.35);
+  const N = 28;
+
+  // Main blade: narrow at the hub, full through the middle, wide foot at the rim.
+  const half = (t: number) =>
+    scale * (0.009 + 0.02 * Math.sin(Math.PI * Math.min(1, t / 0.9)) + 0.014 * Math.pow(t, 8));
+  const lead: THREE.Vector2[] = [];
+  const trail: THREE.Vector2[] = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const r = hub + span * t;
+    const w = half(t) / r;
+    lead.push(at(r, centre(t) + w));
+    trail.push(at(r, centre(t) - w));
+  }
+  const blade = new THREE.Shape([...lead, ...trail.reverse()]);
+
+  // Talon: leaves the blade around 45% out and curls back against the sweep,
+  // tapering to a point just shy of the rim.
+  const t0 = 0.5;
+  const r0 = hub + span * t0;
+  const reach = rim - 0.04 - r0;
+  const curl = (u: number) => centre(t0) - 0.32 * Math.pow(u, 1.5);
+  const tw = (u: number) => scale * (0.022 * Math.pow(1 - u, 0.9) + 0.0008);
+  const a: THREE.Vector2[] = [];
+  const b: THREE.Vector2[] = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N;
+    const r = r0 + reach * Math.sin((u * Math.PI) / 2);
+    const w = tw(u) / r;
+    a.push(at(r, curl(u) + w));
+    b.push(at(r, curl(u) - w));
+  }
+  const talon = new THREE.Shape([...a, ...b.reverse()]);
+
+  const bevel = Math.min(0.004, thickness * 0.3);
+  const geo = new THREE.ExtrudeGeometry([blade, talon], {
+    depth: thickness,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: Math.min(0.003, bevel),
+    bevelSegments: 2,
+    curveSegments: 8,
   });
   geo.translate(0, 0, -thickness / 2);
   return geo;

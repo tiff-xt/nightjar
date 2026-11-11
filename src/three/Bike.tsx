@@ -19,7 +19,7 @@ import {
   sprocket,
   sweep,
   tyre,
-  ySpoke,
+  sweptSpoke,
   type P2,
   type P3,
 } from "./geometry";
@@ -216,7 +216,8 @@ function Wheel({ at, front, m }: { at: P3; front?: boolean; m: Mats }) {
   const geo = useMemo(
     () => ({
       tyre: tyre(0.214, outer, width, rimW),
-      spoke: ySpoke(0.05, 0.208, 0.042),
+      spoke: sweptSpoke(0.05, 0.212, 0.036),
+      spokeFace: sweptSpoke(0.05, 0.212, 0.004, 0.4),
       rotor: front ? rotor(0.148, 0.074) : rotor(0.11, 0.056, 16),
       carrier: arcBand(0.05, 0.08, 0, Math.PI * 2, 0.006, 0.001),
       sprocket: sprocket(0.105, 42),
@@ -290,9 +291,15 @@ function Wheel({ at, front, m }: { at: P3; front?: boolean; m: Mats }) {
           </group>
         )}
       </Pair>
-      {/* Six split spokes */}
-      {Array.from({ length: 6 }, (_, i) => (
-        <mesh key={i} geometry={geo.spoke} rotation={[0, 0, (i / 6) * Math.PI * 2]} material={m.gloss} castShadow />
+      {/* Five swept claw spokes in gloss black, each with a machined
+          silver inlay down its face on both sides */}
+      {Array.from({ length: 5 }, (_, i) => (
+        <group key={i} rotation={[0, 0, (i / 5) * Math.PI * 2]}>
+          <mesh geometry={geo.spoke} material={m.gloss} castShadow />
+          <Pair>
+            {(s) => <mesh key={s} geometry={geo.spokeFace} position={[0, 0, s * 0.0215]} material={m.accent} />}
+          </Pair>
+        </group>
       ))}
       {/* Hub and axle nuts */}
       <mesh rotation={[Math.PI / 2, 0, 0]} material={m.satinBlack}>

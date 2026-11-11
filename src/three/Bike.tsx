@@ -1202,17 +1202,27 @@ const beamMaterial = new THREE.ShaderMaterial({
     void main(){ vUv=uv; vec4 mv=modelViewMatrix*vec4(position,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
   fragmentShader: `uniform float uOpacity; varying vec2 vUv; varying vec3 vN; varying vec3 vV;
     void main(){ float along=pow(vUv.y,1.6); float edge=pow(abs(dot(vN,vV)),1.5);
-      gl_FragColor=vec4(vec3(0.85,0.9,1.0), along*edge*uOpacity); }`,
+      float a=clamp(along*edge*uOpacity,0.0,1.0); if(isnan(a)) a=0.0;
+      gl_FragColor=vec4(vec3(0.85,0.9,1.0), a); }`,
 });
+
+/** World position of the headlight projector (front-end assembly, unexploded). */
+export const HEADLIGHT: P3 = [0.668, 0.865, 0];
+const BEAM_LENGTH = 3.2;
+const BEAM_DIP = 0.1;
 
 function Beam() {
   useFrame(() => {
     beamMaterial.uniforms.uOpacity.value = nightAt(store.progress) * 0.28;
   });
-  // Cone apex at the headlight, opening forward along +x.
+  // Apex sits on the headlight lens and the cone opens forward, aimed slightly
+  // down at the road. A cone's apex is at local +y, so rotating by
+  // (pi/2 - dip) turns its axis (apex -> base) to point along +x, dipped.
+  const h = BEAM_LENGTH / 2;
+  const centre: P3 = [HEADLIGHT[0] + Math.cos(BEAM_DIP) * h, HEADLIGHT[1] - Math.sin(BEAM_DIP) * h, 0];
   return (
-    <mesh position={[0.66 + 1.6, 0.6, 0]} rotation={[0, 0, Math.PI / 2 + 0.12]} material={beamMaterial} renderOrder={2}>
-      <coneGeometry args={[0.85, 3.2, 48, 1, true]} />
+    <mesh position={centre} rotation={[0, 0, Math.PI / 2 - BEAM_DIP]} material={beamMaterial} renderOrder={2}>
+      <coneGeometry args={[0.85, BEAM_LENGTH, 48, 1, true]} />
     </mesh>
   );
 }

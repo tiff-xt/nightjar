@@ -13,7 +13,9 @@ const GUARD = /* glsl */ `
     vec3 c = gl_FragColor.rgb;
     bvec3 bad = bvec3(isnan(c.r) || isinf(c.r), isnan(c.g) || isinf(c.g), isnan(c.b) || isinf(c.b));
     if (any(bad)) c = vec3(0.0);
-    gl_FragColor.rgb = min(c, vec3(32.0));
+    // Negative values (possible from some BRDF terms) also break Bloom's
+    // luminance pass; very hot values overflow half-float mip buffers.
+    gl_FragColor.rgb = clamp(c, vec3(0.0), vec3(16.0));
     if (isnan(gl_FragColor.a)) gl_FragColor.a = 1.0;
   }
 `;

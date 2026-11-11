@@ -15,7 +15,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { store } from "@/lib/store";
 import { nightAt, shotAt, window01 } from "@/lib/story";
-import { Bike } from "./Bike";
+import { Bike, HEADLIGHT } from "./Bike";
 import { Callouts } from "./Callouts";
 import { debugFlags } from "@/lib/debugFlags";
 import { useDebugFlags } from "@/components/useDebugFlags";
@@ -162,7 +162,7 @@ function KeyLight() {
       {/* Headlight beam for the night section. */}
       <spotLight
         ref={head}
-        position={[0.7, 0.9, 0]}
+        position={HEADLIGHT}
         angle={0.38}
         penumbra={0.7}
         color="#e9f0ff"
@@ -342,7 +342,18 @@ export default function Garage() {
         <EffectComposer multisampling={0}>
           {/* Children must be elements, so disabled effects become empty fragments. */}
           {on("bloom") ? (
-            <Bloom mipmapBlur intensity={0.6} luminanceThreshold={0.92} luminanceSmoothing={0.15} />
+            <Bloom
+              mipmapBlur
+              levels={6}
+              radius={0.7}
+              intensity={0.9}
+              // Only genuinely emissive things (headlight, tail light) bloom.
+              // At 0.92 ordinary specular glints on chrome, spokes and bolts
+              // crossed the threshold and popped in and out as the camera
+              // moved: the flashes and flicker seen on real GPUs.
+              luminanceThreshold={1.6}
+              luminanceSmoothing={0.3}
+            />
           ) : (
             <></>
           )}

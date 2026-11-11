@@ -78,10 +78,22 @@ function createMaterials() {
     accent: physical({ color: "#b3b8c1", metalness: 1, roughness: 0.2 }),
     red: physical({ color: RED, metalness: 0.5, roughness: 0.3, clearcoat: 0.8 }),
     gloss: physical({ color: "#0d0e11", metalness: 0.3, roughness: 0.22, clearcoat: 1 }),
-    rimBarrel: physical({ color: "#0d0e11", metalness: 0.3, roughness: 0.3, side: THREE.DoubleSide }),
+    rimBarrel: physical({
+      color: "#09090b",
+      metalness: 0.2,
+      roughness: 0.75,
+      specularIntensity: 0.3,
+      side: THREE.DoubleSide,
+    }),
     satinBlack: physical({ color: "#141519", metalness: 0.45, roughness: 0.55 }),
-    rubber: physical({ color: "#0b0b0c", metalness: 0, roughness: 0.9 }),
-    tyreWall: physical({ color: "#111113", metalness: 0, roughness: 0.75 }),
+    rubber: physical({ color: "#17171a", metalness: 0, roughness: 1, specularIntensity: 0.08, envMapIntensity: 0.12 }),
+    tyreWall: physical({
+      color: "#0e0e10",
+      metalness: 0,
+      roughness: 1,
+      specularIntensity: 0.05,
+      envMapIntensity: 0.08,
+    }),
     engine: physical({ color: "#1d1e22", metalness: 0.75, roughness: 0.48 }),
     fins: physical({ color: "#5a5f69", metalness: 1, roughness: 0.32 }),
     stanchion: physical({ color: "#b8bcc4", metalness: 1, roughness: 0.1 }),
@@ -214,6 +226,20 @@ function Wheel({ at, front, m }: { at: P3; front?: boolean; m: Mats }) {
   return (
     <group position={at}>
       <mesh geometry={geo.tyre} material={m.rubber} castShadow receiveShadow />
+      {/* Tread grooves on the crown and a moulded band on each sidewall: what
+          makes it read as rubber rather than another gloss-black ring. */}
+      {[-0.22, 0, 0.22].map((f) => (
+        <mesh key={f} position={[0, 0, f * width]} material={m.tyreWall}>
+          <torusGeometry args={[outer - 0.0015, 0.0022, 6, 96]} />
+        </mesh>
+      ))}
+      <Pair>
+        {(s) => (
+          <mesh key={s} position={[0, 0, s * width * 0.47]} material={m.tyreWall}>
+            <torusGeometry args={[outer - (outer - 0.214) * 0.45, 0.0035, 6, 96]} />
+          </mesh>
+        )}
+      </Pair>
       {/* Rim barrel, lips and a red pinstripe on each lip */}
       <mesh rotation={[Math.PI / 2, 0, 0]} material={m.rimBarrel}>
         <cylinderGeometry args={[0.21, 0.21, rimW, 64, 1, true]} />
@@ -940,8 +966,8 @@ function FrontEnd({ m }: { m: Mats }) {
         ],
         0.014,
       ),
-      fender: fender(0.31, 0.32, 0.28, 1.62, 0.105, 0.035),
-      fenderStripe: arcBand(0.33, 0.333, 0.6, 1.35, 0.006, 0.001),
+      fender: fender(0.338, 0.348, 0.72, 1.95, 0.095, 0.03),
+      fenderStripe: arcBand(0.356, 0.359, 0.95, 1.7, 0.006, 0.001),
     }),
     [x0],
   );
@@ -1104,7 +1130,7 @@ function FrontEnd({ m }: { m: Mats }) {
       </group>
       {/* Short front fender with a silver pinstripe */}
       <group position={FRONT}>
-        <mesh geometry={geo.fender} material={m.gloss} castShadow />
+        <mesh geometry={geo.fender} material={m.satinBlack} castShadow />
         <mesh geometry={geo.fenderStripe} material={m.accent} />
       </group>
     </group>
